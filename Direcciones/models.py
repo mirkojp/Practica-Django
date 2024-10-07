@@ -32,6 +32,3 @@ class Dirección(models.Model):
     def __str__(self):
         return f"Dirección {self.calle}, {self.numero}, Email: {self.email}, Ciudad: {self.ciudad}"
     
-    
-
-    

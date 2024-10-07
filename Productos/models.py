@@ -69,5 +69,3 @@ class FunkoDescuento(models.Model):
         # Ejecutar la validación antes de guardar
         self.clean()
         super().save(*args, **kwargs)
-
-
