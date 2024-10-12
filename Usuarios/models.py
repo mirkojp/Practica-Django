@@ -34,9 +34,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
     # Relaciones
-    favoritos = models.ManyToManyField(Funko, related_name='favoritos', blank=True)
+    #favoritos = models.ManyToManyField(Funko, related_name='favoritos', blank=True)
 
     objects = UsuarioManager()
 
@@ -70,7 +71,7 @@ class Reseña(models.Model):
 
     #Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    funko = models.ForeignKey(Funko, on_delete=models.CASCADE)
+    funko = models.ForeignKey(Funko,null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'Reseña de {self.usuario.nombre} para {self.funko.nombre}'
