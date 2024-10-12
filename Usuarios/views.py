@@ -1,11 +1,13 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
+#from rest_framework.authtoken.models import Token
+from .models import Token
 from rest_framework import status
 from django.contrib.auth.models import User
 from .serializers import UsuarioSerializer
 from .models import Usuario
 from django.db import IntegrityError
+from django.db import transaction
 
 # Create your views here.
 
@@ -20,22 +22,18 @@ def register(request):
     serializer = UsuarioSerializer(data=request.data)
     if serializer.is_valid():
         try:
-            # Crear el usuario utilizando el método save del serializer
-            serializer.save()
+            with transaction.atomic():
+                # Crear el usuario utilizando el método save del serializer
+                serializer.save()
 
-            # Asignar la contraseña
-            usuario = Usuario.objects.get(nombre=serializer.data["nombre"])
-            usuario.set_password(serializer.validated_data["password"])
-            usuario.save()  # Guardar el usuario con la contraseña encriptada
+                # Asignar la contraseña
+                usuario = Usuario.objects.get(nombre=serializer.data["nombre"])
+                usuario.set_password(serializer.validated_data["password"])
+                usuario.save()  # Guardar el usuario con la contraseña encriptada
 
 
-            #Crea un objeto User solamente para poder crear un token
-            #user = User.objects.create_user(username=serializer.data["nombre"])
-            #user.set_password(serializer.validated_data["password"])
-            #user.save()
-
-            # Crear el token de autenticación
-            token = Token.objects.create(user=usuario)
+                # Crear el token de autenticación
+                token = Token.objects.create(user=usuario)
 
             return Response(
                 {

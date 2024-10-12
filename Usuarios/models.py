@@ -1,6 +1,10 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
+from django.conf import settings
+import binascii
+import os
+
 
 from Productos.models import Funko
 
@@ -42,7 +46,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     objects = UsuarioManager()
 
     USERNAME_FIELD = 'nombre'  # Nombre se utiliza como campo para autenticación
-    REQUIRED_FIELDS = []  # No hay campos requeridos adicionales
+    REQUIRED_FIELDS = ['email']  # No hay campos requeridos adicionales
 
     # Ajustar related_name para evitar conflictos
     groups = models.ManyToManyField(
@@ -75,3 +79,21 @@ class Reseña(models.Model):
 
     def __str__(self):
         return f'Reseña de {self.usuario.nombre} para {self.funko.nombre}'
+
+
+class Token(models.Model):
+    key = models.CharField(max_length=40, primary_key=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, related_name='usuario_auth_token',
+        on_delete=models.CASCADE
+    )
+    created = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_key():
+        return binascii.hexlify(os.urandom(20)).decode()
