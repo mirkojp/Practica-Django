@@ -30,12 +30,12 @@ def register(request):
 
 
             #Crea un objeto User solamente para poder crear un token
-            user = User.objects.create_user(username=serializer.data["nombre"])
-            user.set_password(serializer.validated_data["password"])
-            user.save()
+            #user = User.objects.create_user(username=serializer.data["nombre"])
+            #user.set_password(serializer.validated_data["password"])
+            #user.save()
 
             # Crear el token de autenticación
-            token = Token.objects.create(user=user)
+            token = Token.objects.create(user=usuario)
 
             return Response(
                 {
