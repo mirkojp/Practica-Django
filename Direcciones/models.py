@@ -7,7 +7,7 @@ class Provincia(models.Model):
 
     def __str__(self):
         return self.nombre
-    
+
 class Ciudad(models.Model):
     idCiudad = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
@@ -24,11 +24,10 @@ class Dirección(models.Model):
     numero = models.PositiveIntegerField(null=False, blank=False)
     contacto = PhoneNumberField(region="ES", null=True, blank=True)
     email = models.EmailField(null=False, blank=False)
+    codigo_postal = models.CharField(max_length=10,default="0000", null=False, blank=False)
 
-    #Relaciones
+    # Relaciones
     ciudad = models.ForeignKey(Ciudad, on_delete=models.PROTECT, null=False, blank=False)
-    
 
     def __str__(self):
         return f"Dirección {self.calle}, {self.numero}, Email: {self.email}, Ciudad: {self.ciudad}"
-    
