@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-#from rest_framework.authtoken.models import Token
+from django.shortcuts import get_object_or_404
 from .models import Token
 from rest_framework import status
 from django.contrib.auth.models import User
@@ -13,7 +13,37 @@ from django.db import transaction
 
 @api_view(["POST"]) #Resuelve /usuarios/login
 def login(request):
-    return Response({})
+
+    try:
+        #Busca el usuario con el nombre ingresado
+        usuario = get_object_or_404(Usuario, nombre=request.data["nombre"])
+
+        #Si no coinside la password retorno el mensaje y status
+        if not usuario.check_password(request.data["password"]):
+            return Response(
+                {
+                    "Mensaje": "Credenciales incorrectas"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Crea o obtiene el token de autenticación
+        token, created = Token.objects.get_or_create(user=usuario)
+        serializer = UsuarioSerializer(instance=usuario)
+
+        return Response(
+            {
+                "Mensaje": "Inicio de sesion exitoso",
+                "Token": token.key,
+                "Usuario": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except KeyError: #Excepcion que controla los parametros de autenticacion necesarios
+        return Response("Falta parametos de autenticacion", status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 @api_view(["POST"])  #Resuelve /usuarios
