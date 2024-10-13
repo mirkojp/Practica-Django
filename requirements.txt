@@ -3,3 +3,4 @@ psycopg2-binary
 djangorestframework
 django-phonenumber-field[phonenumbers]
 num2words
+django-cors-headers
