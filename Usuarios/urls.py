@@ -2,6 +2,7 @@ from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
-    #re_path('usuarios', views.register),
-    re_path('usuarios/login', views.login),
+    path('usuarios', views.register, name="usuarios"),
+    path('usuarios/login', views.login, name="usuarios/login"),
+    path('usuarios/<int:id>/', views.listar_usuario)
 ]
