@@ -3,4 +3,16 @@ psycopg2-binary
 djangorestframework
 django-phonenumber-field[phonenumbers]
 num2words
+asgiref
+certifi
+charset-normalizer
 django-cors-headers
+docopt
+idna
+num2words
+psycopg2-binary
+requests
+sqlparse
+typing_extensions
+tzdat
+urllib3
