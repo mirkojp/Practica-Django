@@ -84,7 +84,7 @@ def register(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
     if request.method == 'GET':
@@ -120,7 +120,7 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+        
     elif request.method == 'PUT':
         # Obtener el token del encabezado de la solicitud
         token = request.headers.get('Authorization')
@@ -168,5 +168,35 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
             return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
         except Usuario.DoesNotExist:
             return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif request.method == 'DELETE':
+        # Obtener el token del encabezado de la solicitud
+        token = request.headers.get('Authorization')
+
+        if not token or not token.startswith('Token '):
+            return Response({"error": "Token no provisto o incorrecto."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Extraer el token después de la palabra 'Token '
+        token_key = token.split(' ')[1]
+
+        try:
+            # Buscar el token en la base de datos
+            token = Token.objects.get(key=token_key)
+            usuario = token.user  # Obtener el usuario asociado al token
+
+            # Verificar que el usuario tiene acceso solo a sus propios datos
+            if usuario.idUsuario != id:  # Sólo el usuario puede borrar los datos
+                return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            #Borra el usuario de la bse de datos
+            usuario.delete()
+
+            return Response(status=status.HTTP_200_OK)
+
+        except Token.DoesNotExist:
+            return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
