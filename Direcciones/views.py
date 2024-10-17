@@ -107,10 +107,6 @@ def localidades_por_provincia(request, id_provincia):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-import requests
 
 
 @api_view(["GET"])
@@ -177,11 +173,6 @@ def localidades_censales_por_provincia(request, id_provincia):
             {"error": f"Error inesperado: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-import requests
 
 
 @api_view(["GET"])
