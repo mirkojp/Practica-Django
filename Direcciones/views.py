@@ -42,7 +42,6 @@ def obtener_provincias(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-
 @api_view(["GET"])
 def localidades_por_provincia(request, id_provincia):
     """
