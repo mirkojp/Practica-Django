@@ -5,7 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from .serializers import DirecciónSerializer
 from .models import Dirección
-
+from django.db import transaction
+from .utils import obtener_o_crear_direccion
+from django.http import JsonResponse
+from .exceptions import EntityNotFoundError
+from django.views.decorators.http import require_POST
 
 @api_view(["GET"])
 def obtener_provincias(request):
@@ -37,21 +41,6 @@ def obtener_provincias(request):
             {"error": f"Error inesperado: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-
-# @api_view(["GET"])
-# def localidades_por_provincia(request, id_provincia):
-#     url = f"https://apis.datos.gob.ar/georef/api/localidades?provincia={id_provincia}"
-#     try:
-#         response = requests.get(url)
-#         response.raise_for_status()
-
-#         localidades = response.json().get("localidades", [])
-
-#         return Response({"localidades": localidades}, status=200)
-
-#     except Exception as e:
-#         return Response({"error": f"Error inesperado: {e}"}, status=500)
 
 
 @api_view(["GET"])
@@ -106,7 +95,6 @@ def localidades_por_provincia(request, id_provincia):
             {"error": f"Error inesperado: {e}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
 
 
 @api_view(["GET"])
@@ -245,59 +233,44 @@ def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
         )
 
 
-@api_view(["POST"])
+@require_POST
+@transaction.atomic
 def crear_direccion(request):
-    """
-    Crea una nueva dirección a partir de los datos enviados desde el frontend.
-    """
-    serializer = DirecciónSerializer(data=request.data)
-
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["GET"])
-def listar_direccion(request, id):
-    """
-    Retorna los detalles de una dirección específica.
-    """
     try:
-        direccion = Dirección.objects.get(idDireccion=id)
-        serializer = DirecciónSerializer(direccion)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Dirección.DoesNotExist:
-        return Response(
-            {"error": "Dirección no encontrada."}, status=status.HTTP_404_NOT_FOUND
+        # Datos de la petición
+        calle = request.POST.get("calle")
+        numero = request.POST.get("numero")
+        contacto = request.POST.get("contacto")
+        email = request.POST.get("email")
+        codigo_postal = request.POST.get("codigo_postal")
+        id_ciudad = request.POST.get("id_ciudad")
+        id_provincia = request.POST.get("id_provincia")
+
+        if not all([calle, numero, email, codigo_postal, id_ciudad, id_provincia]):
+            return JsonResponse({"error": "Faltan datos obligatorios."}, status=400)
+
+        # Crear o obtener la dirección
+        direccion = obtener_o_crear_direccion(
+            calle, numero, contacto, email, codigo_postal, id_ciudad, id_provincia
         )
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-@api_view(["DELETE"])
-def eliminar_direccion(request, id):
-    """
-    Elimina una dirección existente.
-    """
-    try:
-        direccion = Dirección.objects.get(idDireccion=id)
-        direccion.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    except Dirección.DoesNotExist:
-        return Response(
-            {"error": "Dirección no encontrada."}, status=status.HTTP_404_NOT_FOUND
+        return JsonResponse(
+            {
+                "mensaje": "Dirección creada exitosamente",
+                "direccion": {
+                    "calle": direccion.calle,
+                    "numero": direccion.numero,
+                    "contacto": str(direccion.contacto),
+                    "email": direccion.email,
+                    "codigo_postal": direccion.codigo_postal,
+                    "ciudad": direccion.ciudad.nombre,
+                    "provincia": direccion.ciudad.provincia.nombre,
+                },
+            },
+            status=201,
         )
+
+    except EntityNotFoundError as e:
+        return JsonResponse({"error": str(e)}, status=404)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(["POST"])
-def actualizar_direccion(request, id):
-    """"
-    Al actualizar una direccion debe primero evaluarse si existen compras,
-    con esa direccion, de ser asi debe crearse una direccion nueva persistiendo la anterior
-    en caso contrario se elimina la direccion
-    """
-    #todo
+        return JsonResponse({"error": "Ocurrió un error inesperado."}, status=500)
