@@ -169,7 +169,7 @@ def operaciones_funkos(request, id):
     except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(["POST"])  # Resuelve agregar un funko a fav del user
+@api_view(["POST", "DELETE"])  # Resuelve agregar un funko a fav del user
 def agregar_favorito(request, id):
 
     # Llama a userAuthorization para verificar el token y obtener el usuario
@@ -184,13 +184,25 @@ def agregar_favorito(request, id):
     except Funko.DoesNotExist:
         return Response({"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND)
     
-    # Verifica si el Funko ya está en la lista de favoritos del usuario
-    if usuario.favoritos.filter(idFunko=funko.idFunko).exists():
-        return Response({"message": "Este Funko ya está en tu lista de favoritos."}, status=status.HTTP_200_OK)
+    if request.method == "POST":
+        
+        # Verifica si el Funko ya está en la lista de favoritos del usuario
+        if usuario.favoritos.filter(idFunko=funko.idFunko).exists():
+            return Response({"message": "Este Funko ya está en tu lista de favoritos."}, status=status.HTTP_200_OK)
+        
+        # Agrega el Funko a los favoritos del usuario
+        usuario.favoritos.add(funko)
+        return Response({"message": "Funko agregado a favoritos con éxito."}, status=status.HTTP_201_CREATED)
     
-    # Agrega el Funko a los favoritos del usuario
-    usuario.favoritos.add(funko)
-    return Response({"message": "Funko agregado a favoritos con éxito."}, status=status.HTTP_201_CREATED)
+    elif request.method == "DELETE":
+
+        # Verifica si el Funko no está en la lista de favoritos del usuario
+        if not usuario.favoritos.filter(idFunko=funko.idFunko).exists():
+            return Response({"message": "Este Funko no está en tu lista de favoritos."}, status=status.HTTP_200_OK)
+        
+        # Elimina el Funko de los favoritos del usuario
+        usuario.favoritos.delete(funko)
+        return Response({"message": "Funko eliminado de favoritos con éxito."}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST", "GET"])  
