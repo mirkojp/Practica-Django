@@ -170,7 +170,7 @@ def operaciones_funkos(request, id):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST", "DELETE"])  # Resuelve agregar un funko a fav del user
-def agregar_favorito(request, id):
+def favoritos(request, id):
 
     # Llama a userAuthorization para verificar el token y obtener el usuario
     usuario, error_response = userAuthorization(request)
