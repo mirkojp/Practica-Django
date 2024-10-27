@@ -45,10 +45,25 @@ class Compra(models.Model):
     fecha = models.DateField(null=False, blank=False)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
 
-    #Relaciones
+    # Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     carrito = models.OneToOneField(Carrito, on_delete=models.PROTECT)
     direccion = models.ForeignKey(Dirección, on_delete=models.PROTECT, null=False, blank=False)
 
     def __str__(self):
         return f"Compra {self.id} - Estado: {self.estado} - Total: {self.total}"
+
+
+class CompraItem(models.Model):
+    idCompraItem = models.AutoField(primary_key=True)
+    cantidad = models.PositiveIntegerField(default=1)
+
+    # Relaciones
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name="items")
+    funko = models.ForeignKey(Funko, on_delete=models.CASCADE)
+
+    def subtotal(self):
+        return self.funko.precio * self.cantidad
+
+    def __str__(self):
+        return f"{self.cantidad} x {self.funko.nombre} - Compra {self.compra.idCompra}"
