@@ -41,7 +41,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
 
     # Relaciones
-    #favoritos = models.ManyToManyField(Funko, related_name='favoritos', blank=True)
+    favoritos = models.ManyToManyField(Funko, related_name='favoritos', blank=True)
 
     objects = UsuarioManager()
 
