@@ -12,7 +12,8 @@ from django.http import JsonResponse
 from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
 from Compras.models import Compra
-
+from decorators.token_decorators import token_required
+@token_required
 @api_view(["GET"])
 def obtener_provincias(request):
     """
@@ -44,6 +45,8 @@ def obtener_provincias(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
+@token_required
 @api_view(["GET"])
 def localidades_por_provincia(request, id_provincia):
     """
@@ -98,6 +101,7 @@ def localidades_por_provincia(request, id_provincia):
         )
 
 
+@token_required
 @api_view(["GET"])
 def localidades_censales_por_provincia(request, id_provincia):
     """
@@ -164,6 +168,7 @@ def localidades_censales_por_provincia(request, id_provincia):
         )
 
 
+@token_required
 @api_view(["GET"])
 def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
     """
@@ -236,6 +241,7 @@ def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
 
 @require_POST
 @transaction.atomic
+@token_required
 def crear_direccion(request):
     try:
         # Datos de la petición
@@ -268,7 +274,7 @@ def crear_direccion(request):
                     "provincia": direccion.ciudad.provincia.nombre,
                 },
             },
-            status=201,
+            status=status.HTTP_201_CREATED,
         )
 
     except EntityNotFoundError as e:
@@ -278,6 +284,7 @@ def crear_direccion(request):
 
 
 @api_view(["GET"])
+@token_required
 def listar_direccion_por_compra(request, idCompra):
     try:
         # Validar que la compra existe
@@ -304,4 +311,3 @@ def listar_direccion_por_compra(request, idCompra):
             {"error": "Error interno del servidor", "detalle": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
