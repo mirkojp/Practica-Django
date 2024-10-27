@@ -5,8 +5,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from Usuarios.models import Token, Usuario
 from .models import Funko
-from .models import Descuento, FunkoDescuento
-from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer
+from .models import Descuento, FunkoDescuento, Categoría
+from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer
 from django.db import IntegrityError
 from django.db import transaction
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
@@ -206,7 +206,7 @@ def favoritos(request, id):
 
 
 @api_view(["POST", "GET"])  
-def descuentos(request):
+def descuentos(request):     #Resuelve crear y listar los descuentos
 
     # Llama a userAuthorization para verificar el token y obtener el usuario
     usuario, error_response = adminAuthorization(request)
@@ -415,7 +415,7 @@ def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
         )
     
 @api_view(["DELETE", "PUT", "GET"])
-def op_funkoDescuentos(request, id):
+def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, eliminarlo y modificarlo
 
     # Llama a userAuthorization para verificar el token y obtener el usuario
     usuario, error_response = adminAuthorization(request)
@@ -501,6 +501,142 @@ def op_funkoDescuentos(request, id):
             )
         except FunkoDescuento.DoesNotExist:
             return Response({"error": "FunkoDescuento no encontrado con ese ID."}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
+            return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
+        
+@api_view(["POST", "GET"])
+def categorias(request):
+
+    
+    if request.method == 'POST':
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+
+        #Verifica que la request tenga todos los datos necesarios
+        serializer = CategoríaSerializer(data=request.data)
+        if serializer.is_valid():
+
+            try:
+                with transaction.atomic():
+                    # Crear el descuento utilizando el método save del serializer
+                    serializer.save()
+
+                return Response(
+                    {
+                        "Categoria": serializer.data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except IntegrityError:
+                # Manejo de excepciones si hay un error de integridad
+                return Response({"error": "Ya existe una Categoria con ese nombre."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                # Manejo de otras excepciones
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    elif request.method == 'GET':
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = userAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+
+        try:
+            # Serializar todos los registros del modelo Descuento
+            categorias = Categoría.objects.all()
+            serializer = CategoríaSerializer(categorias, many=True)
+
+
+            return Response(
+                {
+                    "Categorias" : serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(["DELETE", "PUT", "GET"])
+def op_categorias(request, id):
+
+    # Llama a userAuthorization para verificar el token y obtener el usuario
+    usuario, error_response = adminAuthorization(request)
+
+    if error_response: # Retorna el error si el token es inválido o no encontrado
+        return error_response
+    
+    if request.method == 'GET': 
+        try:
+            # Intentar obtener la Categoria por el id 
+            categoria = Categoría.objects.get(idCategoria=id)
+            serializer = CategoríaSerializer(categoria)
+
+            return Response(
+                {
+                    "Categoria" : serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        except Categoría.DoesNotExist:
+            return Response({"error": "Categoria no encontrada con ese ID."}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
+            return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
+        
+    elif request.method == "PUT":
+        #Verifica que la request tenga todos los datos necesarios
+        serializer = CategoríaSerializer(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                # Intentar obtener la Categoria por el id 
+                categoria = Categoría.objects.get(idCategoria=id)
+
+                # Validar que no exista otra Categoria con el mismo nombre (excluyendo la actual)
+                if Categoría.objects.filter(nombre=serializer.data["nombre"]).exclude(idCategoria=categoria.idCategoria).exists():
+                    return Response(
+                        {"error": "Ya existe una Categoria con el mismo nombre"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                        
+                categoria.nombre = serializer.data["nombre"]
+                serializer = CategoríaSerializer(categoria)
+                categoria.save()
+                
+                return Response(
+                    {
+                        "Mensaje": "Recurso actualizado correctamente",
+                        "Categoria": serializer.data,
+                    },
+                    status=status.HTTP_200_OK
+                )
+            except Categoría.DoesNotExist:
+                return Response({"error": "Categoria no encontrada con ese ID."}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                # Manejo de otras excepciones
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    elif request.method == "DELETE":
+        try:
+            # Intentar obtener la Categoria por el id 
+            categoria = Categoría.objects.get(idCategoria=id)
+            categoria.delete()
+
+            return Response(status=status.HTTP_200_OK)
+        
+        except Categoría.DoesNotExist:
+            return Response({"error": "Categoria no encontrada con ese ID."}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
