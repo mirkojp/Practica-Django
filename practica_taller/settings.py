@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-7a#&u+kfmxgo$+9r&m-kb8+ra_(fvg8#_$b@)qft__1)byun(j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["practica-django-fxpz.onrender.com", "localhost", "127.0.0.1"]
 
 
 # Application definition
