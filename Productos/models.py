@@ -17,8 +17,6 @@ class Descuento(models.Model):
     idDescuento = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100, editable=False, null=False, blank=False)
     porcentaje = models.FloatField(null=False, blank=False, validators=[MinValueValidator(0), MaxValueValidator(100)])
-    fecha_inicio = models.DateField(null=False, blank=False)
-    fecha_expiracion = models.DateField(null=False, blank=False)
 
     def save(self, *args, **kwargs):
         # Convertir el porcentaje a texto y actualizar el campo nombre
@@ -38,7 +36,6 @@ class Funko(models.Model):
 
     #Relaciones
     categoría = models.ManyToManyField(Categoría)
-    descuentos = models.ManyToManyField('Descuento', through='FunkoDescuento', related_name='funkos')
 
     def __str__(self):
         return f"{self.nombre} - Stock: {self.stock} - Precio: {self.precio}"
@@ -54,18 +51,7 @@ class FunkoDescuento(models.Model):
     class Meta:
         unique_together = ('funko', 'descuento', 'fecha_inicio', 'fecha_expiracion')
 
-    def clean(self):
-        # Verificar que no haya otro descuento activo para este Funko en las fechas proporcionadas
-        descuentos_activos = FunkoDescuento.objects.filter(
-            funko=self.funko,
-            fecha_expiracion__gte=self.fecha_inicio,
-            fecha_inicio__lte=self.fecha_expiracion
-        ).exclude(id=self.id)
-
-        if descuentos_activos.exists():
-            raise ValidationError("Ya existe un descuento vigente para este Funko en el período seleccionado.")
 
     def save(self, *args, **kwargs):
         # Ejecutar la validación antes de guardar
-        self.clean()
         super().save(*args, **kwargs)
