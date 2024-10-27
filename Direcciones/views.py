@@ -239,7 +239,7 @@ def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
         )
 
 
-@require_POST
+@api_view(["POST"])
 @transaction.atomic
 @token_required
 def crear_direccion(request):

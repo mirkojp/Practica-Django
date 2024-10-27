@@ -32,7 +32,7 @@ class CrearDireccionViewTests(TestCase):
 
         # Assert that the response status code is 201 (created)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         # Assert that the response contains the correct message and data
         self.assertJSONEqual(
             response.content,
@@ -41,7 +41,7 @@ class CrearDireccionViewTests(TestCase):
                 "direccion": {
                     "calle": "Calle Falsa",
                     "numero": "123",
-                    "contacto": "+5491123456789",  # Verify expected format
+                    "contacto": "+5491123456789",  
                     "email": "test@example.com",
                     "codigo_postal": "1234",
                     "ciudad": self.ciudad.nombre,
@@ -93,11 +93,30 @@ class CrearDireccionViewTests(TestCase):
             headers=headers,
         )
 
-        # Assert that the response status code is 400 (bad request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        # Assert that the response contains the expected error message
         self.assertJSONEqual(response.content, {"error": "Faltan datos obligatorios."})
+
+    def test_crear_direccion_sin_token(self):
+        # Realiza una solicitud POST sin el encabezado de autorización
+        response = self.client.post(
+            self.url,
+            {
+                "calle": "Calle Falsa",
+                "numero": "123",
+                "contacto": "+5491123456789",
+                "email": "test@example.com",
+                "codigo_postal": "1234",
+                "id_ciudad": self.ciudad.idCiudad,
+                "id_provincia": self.provincia.idProvincia,
+            },
+        )
+
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  
+        self.assertJSONEqual(
+            response.content, {"error": "Token no provisto o incorrecto."}
+        )
 
     # def test_crear_direccion_exitosamente(self):
     #     response = self.client.post(
