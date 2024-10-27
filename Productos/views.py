@@ -402,8 +402,14 @@ def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
             status=status.HTTP_200_OK
         )
     
-@api_view(["DELETE"])
+@api_view(["DELETE", "PUT", "GET"])
 def op_funkoDescuentos(request, id):
+
+    # Llama a userAuthorization para verificar el token y obtener el usuario
+    usuario, error_response = adminAuthorization(request)
+
+    if error_response: # Retorna el error si el token es inválido o no encontrado
+        return error_response
 
     if request.method == "DELETE":
         try:
@@ -413,8 +419,76 @@ def op_funkoDescuentos(request, id):
 
             return Response(status=status.HTTP_200_OK)
         
-        except Descuento.DoesNotExist:
+        except FunkoDescuento.DoesNotExist:
             return Response({"error": "Descuento no encontrado con ese ID."}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
+            return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
+        
+    elif request.method == "PUT":
+        # Intenta obtener el FunkoDescuento por su ID
+        funko_descuento = get_object_or_404(FunkoDescuento, idFunkoDescuento=id)
+
+        # Obtener el nuevo id del funko desde la request
+        nuevo_funko_id = request.data.get('funko')
+
+        # Si el nuevo funko es diferente del original, devuelve un error
+        if nuevo_funko_id and nuevo_funko_id != funko_descuento.funko.idFunko:
+            return Response({"error": "No puedes cambiar el Funko asociado a este descuento."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verifica que la request tenga los datos necesarios
+        serializer = FunkoDescuentoSerializer(funko_descuento, data=request.data)
+
+        if serializer.is_valid():
+            try:
+                # Validar que no exista otro registro con el mismo funko y descuento en solapamiento de fechas
+                fecha_inicio = serializer.validated_data.get('fecha_inicio')
+                fecha_expiracion = serializer.validated_data.get('fecha_expiracion')
+                funko = funko_descuento.funko
+                descuento = funko_descuento.descuento
+
+                overlapping = FunkoDescuento.objects.filter(
+                    funko=funko
+                ).exclude(idFunkoDescuento=funko_descuento.idFunkoDescuento).filter(
+                    Q(fecha_inicio__lte=fecha_expiracion) & Q(fecha_expiracion__gte=fecha_inicio)
+                ).exists()
+
+                if overlapping:
+                    return Response(
+                        {"error": "Ya existe un FunkoDescuento con las mismas fechas para este Funko."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Guardar los cambios
+                serializer.save()
+
+                return Response(
+                    {
+                        "Mensaje": "FunkoDescuento actualizado correctamente.",
+                        "FunkoDescuento": serializer.data,
+                    },
+                    status=status.HTTP_200_OK
+                )
+
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == "GET":
+        try:
+            # Intentar obtener el FunkoDescuento por el id 
+            funkoDescuento = FunkoDescuento.objects.get(idFunkoDescuento=id)
+            serializer = FunkoDescuentoSerializer(funkoDescuento)
+
+            return Response(
+                {
+                    "Descuento" : serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        except FunkoDescuento.DoesNotExist:
+            return Response({"error": "FunkoDescuento no encontrado con ese ID."}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
