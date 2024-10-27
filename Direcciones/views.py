@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 import requests
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from .utils import obtener_o_crear_direccion
 from django.http import JsonResponse
 from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
+from Compras.models import Compra
 
 @api_view(["GET"])
 def obtener_provincias(request):
@@ -246,7 +248,7 @@ def crear_direccion(request):
         id_provincia = request.POST.get("id_provincia")
 
         if not all([calle, numero, email, codigo_postal, id_ciudad, id_provincia]):
-            return JsonResponse({"error": "Faltan datos obligatorios."}, status=400)
+            return JsonResponse({"error": "Faltan datos obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Crear o obtener la dirección
         direccion = obtener_o_crear_direccion(
@@ -270,6 +272,36 @@ def crear_direccion(request):
         )
 
     except EntityNotFoundError as e:
-        return JsonResponse({"error": str(e)}, status=404)
+        return JsonResponse({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return JsonResponse({"error": "Ocurrió un error inesperado."}, status=500)
+        return JsonResponse({"error": "Ocurrió un error inesperado."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def listar_direccion_por_compra(request, idCompra):
+    try:
+        # Validar que la compra existe
+        compra = get_object_or_404(Compra, idCompra=idCompra)
+
+        # Extraer la información de la dirección asociada a la compra
+        direccion = {
+            "idDireccion": compra.direccion.idDireccion,
+            "calle": compra.direccion.calle,
+            "numero": compra.direccion.numero,
+            "contacto": compra.direccion.contacto,
+            "email": compra.direccion.email,
+            "codigo_postal": compra.direccion.codigo_postal,
+            "ciudad": compra.direccion.ciudad.nombre,
+            "provincia": compra.direccion.ciudad.provincia.nombre,
+        }
+
+        # Respuesta en JSON
+        respuesta = {"direccion": direccion}
+        return JsonResponse(respuesta, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return JsonResponse(
+            {"error": "Error interno del servidor", "detalle": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
