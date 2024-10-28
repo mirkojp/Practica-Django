@@ -13,8 +13,10 @@ from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
 from Compras.models import Compra
 from decorators.token_decorators import token_required
-@token_required
+
+
 @api_view(["GET"])
+@token_required
 def obtener_provincias(request):
     """
     Obtiene la lista de provincias desde la API de Georef.
@@ -46,8 +48,8 @@ def obtener_provincias(request):
         )
 
 
-@token_required
 @api_view(["GET"])
+@token_required
 def localidades_por_provincia(request, id_provincia):
     """
     Obtiene localidades de una provincia específica filtradas por nombre.
@@ -101,8 +103,8 @@ def localidades_por_provincia(request, id_provincia):
         )
 
 
-@token_required
 @api_view(["GET"])
+@token_required
 def localidades_censales_por_provincia(request, id_provincia):
     """
     Obtiene localidades censales de una provincia específica filtradas por nombre.
@@ -168,8 +170,8 @@ def localidades_censales_por_provincia(request, id_provincia):
         )
 
 
-@token_required
 @api_view(["GET"])
+@token_required
 def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
     """
     Obtiene calles de una localidad censal específica filtradas por nombre.
@@ -240,8 +242,8 @@ def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
 
 
 @api_view(["POST"])
-@transaction.atomic
 @token_required
+@transaction.atomic
 def crear_direccion(request):
     try:
         # Datos de la petición
