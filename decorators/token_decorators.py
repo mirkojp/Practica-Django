@@ -10,7 +10,7 @@ def token_required_admin(view_func):
 
         if error_response:
             return error_response 
-        return view_func(request, *args, **kwargs)
+        return view_func(request, usuario, *args, **kwargs)
 
     return _wrapped_view
 
@@ -21,6 +21,6 @@ def token_required(view_func):
         usuario, response = userAuthorization(request)
         if response is not None:
             return response
-        return view_func(request, *args, **kwargs)
+        return view_func(request, usuario, *args, **kwargs)
 
     return _wrapped_view
