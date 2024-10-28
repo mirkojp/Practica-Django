@@ -62,6 +62,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "https://superb-jalebi-af3622.netlify.app",
     "https://practica-django-fxpz.onrender.com",
+    "https://importfunko.netlify.app/",
 ]  # THIS IS DANGEROUS THIS MUST NOT REACH PRODUCTION
 
 ROOT_URLCONF = 'practica_taller.urls'
