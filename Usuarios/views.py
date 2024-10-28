@@ -6,6 +6,7 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from .serializers import UsuarioSerializer
 from .models import Usuario
+from Compras.models import Carrito
 from django.db import IntegrityError
 from django.db import transaction
 from rest_framework.parsers import JSONParser
@@ -65,6 +66,9 @@ def register(request):
 
                 # Crear el token de autenticación
                 token = Token.objects.create(user=usuario)
+
+                # Crear el carrito asociado al usuario recién creado
+                carrito = Carrito.objects.create(usuario=usuario)
 
             return Response(
                 {
@@ -189,6 +193,9 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
             # Verificar que el usuario tiene acceso solo a sus propios datos
             if usuario.idUsuario != id:  # Sólo el usuario puede borrar los datos
                 return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # Elimina el carrito asociado al usuario
+            Carrito.objects.filter(usuario=usuario).exists() and Carrito.objects.filter(usuario=usuario).delete()
 
             #Borra el usuario de la bse de datos
             usuario.delete()
