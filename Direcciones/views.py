@@ -12,11 +12,11 @@ from django.http import JsonResponse
 from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
 from Compras.models import Compra
-from decorators.token_decorators import token_required
+from decorators.token_decorators import token_required_without_user
 
 
 @api_view(["GET"])
-@token_required
+@token_required_without_user
 def obtener_provincias(request):
     """
     Obtiene la lista de provincias desde la API de Georef.
@@ -49,7 +49,7 @@ def obtener_provincias(request):
 
 
 @api_view(["GET"])
-@token_required
+@token_required_without_user
 def localidades_por_provincia(request, id_provincia):
     """
     Obtiene localidades de una provincia específica filtradas por nombre.
@@ -104,7 +104,7 @@ def localidades_por_provincia(request, id_provincia):
 
 
 @api_view(["GET"])
-@token_required
+@token_required_without_user
 def localidades_censales_por_provincia(request, id_provincia):
     """
     Obtiene localidades censales de una provincia específica filtradas por nombre.
@@ -171,7 +171,7 @@ def localidades_censales_por_provincia(request, id_provincia):
 
 
 @api_view(["GET"])
-@token_required
+@token_required_without_user
 def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
     """
     Obtiene calles de una localidad censal específica filtradas por nombre.
@@ -242,7 +242,7 @@ def calles_por_localidad_censal(request, id_provincia, id_localidad_censal):
 
 
 @api_view(["POST"])
-@token_required
+@token_required_without_user
 @transaction.atomic
 def crear_direccion(request):
     try:
@@ -286,27 +286,14 @@ def crear_direccion(request):
 
 
 @api_view(["GET"])
-@token_required
+@token_required_without_user
 def listar_direccion_por_compra(request, idCompra):
     try:
-        # Validar que la compra existe
         compra = get_object_or_404(Compra, idCompra=idCompra)
 
-        # Extraer la información de la dirección asociada a la compra
-        direccion = {
-            "idDireccion": compra.direccion.idDireccion,
-            "calle": compra.direccion.calle,
-            "numero": compra.direccion.numero,
-            "contacto": compra.direccion.contacto,
-            "email": compra.direccion.email,
-            "codigo_postal": compra.direccion.codigo_postal,
-            "ciudad": compra.direccion.ciudad.nombre,
-            "provincia": compra.direccion.ciudad.provincia.nombre,
-        }
+        direccion_data = DirecciónSerializer(compra.direccion).data
 
-        # Respuesta en JSON
-        respuesta = {"direccion": direccion}
-        return JsonResponse(respuesta, status=status.HTTP_200_OK)
+        return Response({"direccion": direccion_data}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return JsonResponse(
