@@ -15,6 +15,18 @@ def token_required_admin(view_func):
     return _wrapped_view
 
 
+def token_required_admin_without_user(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        _, error_response = adminAuthorization(request)
+
+        if error_response:
+            return error_response
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
 def token_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -22,5 +34,18 @@ def token_required(view_func):
         if response is not None:
             return response
         return view_func(request, usuario, *args, **kwargs)
+
+    return _wrapped_view
+
+
+def token_required_without_user(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        _, response = userAuthorization(request)  
+
+        if response is not None:
+            return response
+
+        return view_func(request, *args, **kwargs)
 
     return _wrapped_view
