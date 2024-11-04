@@ -44,7 +44,12 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
+    'phonenumber_field'
 ]
+
+PHONENUMBER_DEFAULT_REGION = "AR"
+PHONENUMBER_DB_FORMAT = "E164"
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

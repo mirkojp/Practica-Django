@@ -63,7 +63,7 @@ def carritos(request, usuario):
                 )
 
                 # Actualizar el subtotal en Carrito
-                carrito.subtotal *= subtotal
+                carrito.total += subtotal
                 carrito.save()
                 
 
