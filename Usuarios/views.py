@@ -9,6 +9,7 @@ from .models import Usuario
 from Compras.models import Carrito
 from django.db import IntegrityError
 from django.db import transaction
+from Utils.validarcontacto import validar_contacto
 from rest_framework.parsers import JSONParser
 
 
@@ -50,10 +51,12 @@ def login(request):
 
 @api_view(["POST"])  #Resuelve /usuarios
 def register(request):
+
     #Verifica que la request tenga todos los datos necesarios
     serializer = UsuarioSerializer(data=request.data)
     if serializer.is_valid():
         try:
+
             with transaction.atomic():
                 # Crear el usuario utilizando el método save del serializer
                 serializer.save()
