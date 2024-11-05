@@ -84,3 +84,59 @@ def carritos(request, usuario):
             return Response({"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif request.method == "DELETE":
+
+        # Verificar que el ID del Funko fue proporcionado
+        id_funko = request.data.get("idFunko")
+        if not id_funko:
+            return Response({"error": "Falta el ID del Funko a eliminar."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Obtener el carrito del usuario
+            carrito = Carrito.objects.get(usuario=usuario)
+
+            # Obtener el CarritoItem con el Funko especificado
+            carrito_item = CarritoItem.objects.get(carrito=carrito, funko__idFunko=id_funko)
+
+            # Actualizar el total en el carrito
+            with transaction.atomic():
+                carrito.total -= carrito_item.subtotal
+                carrito_item.delete()
+                carrito.save()
+
+            return Response(
+                {"Mensaje": "Funko eliminado del carrito correctamente."},
+                status=status.HTTP_200_OK
+            )
+
+        except Carrito.DoesNotExist:
+            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+        except CarritoItem.DoesNotExist:
+            return Response({"error": "El Funko especificado no está en el carrito."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif request.method == "GET":
+        try:
+            # Obtener el carrito del usuario
+            carrito = Carrito.objects.get(usuario=usuario)
+
+            # Obtener todos los CarritoItem en el carrito
+            carrito_items = CarritoItem.objects.filter(carrito=carrito)
+
+            # Serializar los CarritoItem para obtener los datos del Funko y la cantidad
+            serializer = CarritoItemSerializer(carrito_items, many=True)
+
+            return Response(
+                {
+                    "Mensaje": "Lista de Funkos en el carrito.",
+                    "CarritoItems": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Carrito.DoesNotExist:
+            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
