@@ -224,3 +224,71 @@ def compras(request, usuario):
         
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["PATCH", "GET"])
+@token_required
+def operaciones_compras(request, id, usuario):
+
+    if request.method == "GET":
+        try:
+            # Buscar la compra con el id proporcionado
+            compra = Compra.objects.get(idCompra=id)
+            
+            # Verificar si el usuario es admin o si la compra pertenece al usuario
+            if usuario.is_staff or compra.usuario == usuario:
+                # Serializar la compra
+                serializer = CompraSerializer(compra)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                # Si el usuario no es admin ni dueño de la compra, retornar un error
+                return Response({"error": "No tienes permiso para acceder a esta compra."}, status=status.HTTP_403_FORBIDDEN)
+        
+        except Compra.DoesNotExist:
+            return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif request.method == "PATCH":
+        if not usuario.is_staff:
+            # Solo los administradores pueden cambiar el estado de la compra
+            return Response(
+                {"error": "Permiso denegado. Solo los administradores pueden cambiar el estado de una compra."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            # Obtener la compra
+            compra = Compra.objects.get(idCompra=id)
+            
+            # Validar que el nuevo estado esté en los cambios permitidos
+            nuevo_estado = request.data.get("estado")
+            
+            if nuevo_estado not in ["ENVIADO", "ENTREGADO"]:
+                return Response(
+                    {"error": "El estado proporcionado no es válido. Solo se permite cambiar a 'ENVIADO' o 'ENTREGADO'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Cambios permitidos de estado
+            if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADA":
+                compra.estado = "ENVIADA"
+            elif compra.estado == "ENVIADA" and nuevo_estado == "ENTREGADA":
+                compra.estado = "ENTREGADA"
+            else:
+                return Response(
+                    {"error": f"No se permite cambiar el estado de '{compra.estado}' a '{nuevo_estado}'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Guardar el cambio de estado
+            compra.save()
+            
+            # Serializar y retornar la compra actualizada
+            serializer = CompraSerializer(compra)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        except Compra.DoesNotExist:
+            return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
