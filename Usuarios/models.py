@@ -34,7 +34,7 @@ class UsuarioManager(BaseUserManager):
 class Usuario(AbstractBaseUser, PermissionsMixin):
     idUsuario = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=30, unique=True, blank=False, null=False)  # Campo para autenticación
-    contacto = PhoneNumberField(region="ES", null=True, blank=True)
+    contacto = PhoneNumberField(null=True, blank=True)
     email = models.EmailField(unique=True, blank=False, null=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
