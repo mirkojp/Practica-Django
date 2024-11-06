@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from Usuarios.models import Token, Usuario
-from .models import Carrito, CarritoItem
+from .models import Carrito, CarritoItem, Compra, CompraItem
 from datetime import date
-from .serializers import CarritoItemSerializer
+from .serializers import CarritoItemSerializer, CompraItemSerializer, CompraSerializer
 from Productos.models import Funko, FunkoDescuento, Descuento
 from django.db import IntegrityError
 from django.db import transaction
@@ -138,5 +138,89 @@ def carritos(request, usuario):
 
         except Carrito.DoesNotExist:
             return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(["POST", "GET"])
+@token_required
+def compras(request, usuario):
+
+    if request.method == "POST":
+        # Obtener el ID de la dirección desde el body de la request
+        id_direccion = request.data.get("idDireccion")
+        if not id_direccion:
+            return Response({"error": "Falta el ID de la dirección."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Obtener el carrito del usuario y verificar si contiene items
+            carrito = Carrito.objects.get(usuario=usuario)
+            carrito_items = CarritoItem.objects.filter(carrito=carrito)
+            if not carrito_items.exists():
+                return Response({"error": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Crear la compra con valores temporales de subtotal y total
+            today = date.today()
+            compra = Compra.objects.create(
+                usuario=usuario,
+                direccion_id=id_direccion,
+                subtotal=0,  # Valor temporal
+                total=0,     # Valor temporal
+                fecha=today,
+                estado="PENDIENTE"
+            )
+
+            # Variables para calcular el subtotal y total de la compra
+            subtotal_compra = 0
+
+            # Crear las líneas de compra (CompraItem) a partir de los items del carrito
+            with transaction.atomic():
+                for item in carrito_items:
+                    # Crear el CompraItem basado en cada CarritoItem
+                    compra_item = CompraItem.objects.create(
+                        compra=compra,
+                        funko=item.funko,
+                        cantidad=item.cantidad,
+                        subtotal=item.subtotal
+                    )
+                    # Sumar el subtotal del item al subtotal total de la compra
+                    subtotal_compra += compra_item.subtotal
+
+                # Actualizar subtotal y total en la compra
+                compra.subtotal = subtotal_compra
+                compra.total = subtotal_compra  # Ajusta si necesitas aplicar impuestos o costos adicionales
+                compra.save()
+
+                # Limpiar el carrito después de crear la compra
+                carrito.items.all().delete()  # Eliminar todos los CarritoItems
+                carrito.total = 0  # Reiniciar el total del carrito
+                carrito.save()
+
+            # Serializar y devolver la compra creada
+            serializer = CompraSerializer(compra)
+            return Response(
+                {
+                    "Mensaje": "Compra creada exitosamente.",
+                    "Compra": serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Carrito.DoesNotExist:
+            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif request.method == "GET":
+        try:
+            # Si el usuario es admin, obten todas las compras; de lo contrario, solo las compras del usuario
+            if usuario.is_staff:
+                compras = Compra.objects.all()
+            else:
+                compras = Compra.objects.filter(usuario=usuario)
+
+            # Serializar las compras
+            serializer = CompraSerializer(compras, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

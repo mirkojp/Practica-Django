@@ -12,7 +12,6 @@ class Carrito(models.Model):
 
     #Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    #funkos = models.ManyToManyField(Funko, blank=True)
 
     def __str__(self):
         return f"Carrito {self.idCarrito} - Total: {self.total}"
@@ -47,7 +46,6 @@ class Compra(models.Model):
 
     # Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    carrito = models.OneToOneField(Carrito, on_delete=models.PROTECT)
     direccion = models.ForeignKey(Dirección, on_delete=models.PROTECT, null=False, blank=False)
 
     def __str__(self):
