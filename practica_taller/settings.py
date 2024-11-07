@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,6 +30,9 @@ ALLOWED_HOSTS = ["practica-django-fxpz.onrender.com", "localhost", "127.0.0.1"]
 
 # Application definition
 
+MERCADOPAGO_PUBLIC_KEY_TEST = os.environ.get("MERCADOPAGO_PUBLIC_KEY_TEST")
+MERCADOPAGO_ACCESS_TOKEN_TEST = os.environ.get("MERCADOPAGO_ACCESS_TOKEN_TEST")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -44,7 +47,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
-    'phonenumber_field'
+    'phonenumber_field',
 ]
 
 PHONENUMBER_DEFAULT_REGION = "AR"
