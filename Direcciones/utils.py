@@ -78,12 +78,12 @@ def obtener_o_crear_ciudad(id_ciudad, id_provincia):
         return Ciudad.objects.get(idCiudad=id_ciudad, provincia_id=id_provincia)
     except Ciudad.DoesNotExist:
         # Si no existe, consultar la API de Georef Argentina
-        url = f"https://apis.datos.gob.ar/georef/api/localidades?id={id_ciudad}&max=1"
+        url = f"https://apis.datos.gob.ar/georef/api/localidades-censales?id={id_ciudad}&max=1"
         response = requests.get(url)
-
+        print(response)
         if response.status_code == 200:
             data = response.json()
-            ciudades = data.get("localidades", [])
+            ciudades = data.get("localidades_censales", [])
 
             if ciudades:
                 # Extraer la primera ciudad de la lista

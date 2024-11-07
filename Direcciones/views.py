@@ -274,6 +274,7 @@ def crear_direccion(request):
                     "codigo_postal": direccion.codigo_postal,
                     "ciudad": direccion.ciudad.nombre,
                     "provincia": direccion.ciudad.provincia.nombre,
+                    "id_direccion": direccion.idDireccion
                 },
             },
             status=status.HTTP_201_CREATED,
