@@ -16,4 +16,6 @@ sqlparse
 typing_extensions
 urllib3
 requests
+google-auth
 mercadopago
+
