@@ -104,6 +104,8 @@ def google(request):
             # Obtén el token enviado desde el frontend
             token_google = request.data.get('token')
 
+            return JsonResponse({"token" : token_google})
+
             # Verifica el token de Google
             id_info = id_token.verify_oauth2_token(token_google, requests.Request(), GOOGLE_CLIENT_ID)
 
