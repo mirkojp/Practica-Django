@@ -73,6 +73,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://importfunko.netlify.app",
 ]  # THIS IS DANGEROUS THIS MUST NOT REACH PRODUCTION
 
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+SECURE_CROSS_ORIGIN_EMBEDDER_POLICY = 'require-corp'
+
 ROOT_URLCONF = 'practica_taller.urls'
 
 TEMPLATES = [
