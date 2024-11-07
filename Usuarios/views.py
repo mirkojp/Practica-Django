@@ -126,18 +126,19 @@ def google(request):
             #token, created = Token.objects.get_or_create(user=usuario)
 
             # Devuelve un token o mensaje de éxito al frontend
-            return JsonResponse({
+            return Response({
                 'success': True,
                 'message': 'Usuario autenticado exitosamente.',
                 #'user_id': usuario.idUsuario,
+                "id_info" : id_info,
                 "token" : token_google
             })
 
         except ValueError:
             # El token no es válido
-            return JsonResponse({'error': 'Token de Google no válido'}, status=400)
+            return Response({'error': 'Token de Google no válido'}, status=400)
 
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    return Response({'error': 'Método no permitido'}, status=405)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
