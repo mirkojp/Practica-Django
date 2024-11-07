@@ -131,7 +131,7 @@ def google(request):
                 'success': True,
                 'message': 'Usuario autenticado exitosamente.',
                 'usuario': serializer.data,
-                "token" : token
+                "token" : token.key
             })
 
         except ValueError:
