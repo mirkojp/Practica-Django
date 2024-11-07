@@ -16,3 +16,4 @@ sqlparse
 typing_extensions
 urllib3
 requests
+mercadopago
