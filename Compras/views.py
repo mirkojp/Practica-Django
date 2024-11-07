@@ -13,6 +13,10 @@ from django.db import transaction
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from django.db.models import Q
 from decorators.token_decorators import token_required, token_required_admin
+from rest_framework.views import APIView
+from django.conf import settings
+import mercadopago
+import json
 
 
 # Create your views here.
@@ -140,7 +144,7 @@ def carritos(request, usuario):
             return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["POST", "GET"])
 @token_required
 def compras(request, usuario):
@@ -234,7 +238,7 @@ def operaciones_compras(request, id, usuario):
         try:
             # Buscar la compra con el id proporcionado
             compra = Compra.objects.get(idCompra=id)
-            
+
             # Verificar si el usuario es admin o si la compra pertenece al usuario
             if usuario.is_staff or compra.usuario == usuario:
                 # Serializar la compra
@@ -243,12 +247,12 @@ def operaciones_compras(request, id, usuario):
             else:
                 # Si el usuario no es admin ni dueño de la compra, retornar un error
                 return Response({"error": "No tienes permiso para acceder a esta compra."}, status=status.HTTP_403_FORBIDDEN)
-        
+
         except Compra.DoesNotExist:
             return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
     elif request.method == "PATCH":
         if not usuario.is_staff:
             # Solo los administradores pueden cambiar el estado de la compra
@@ -260,16 +264,16 @@ def operaciones_compras(request, id, usuario):
         try:
             # Obtener la compra
             compra = Compra.objects.get(idCompra=id)
-            
+
             # Validar que el nuevo estado esté en los cambios permitidos
             nuevo_estado = request.data.get("estado")
-            
+
             if nuevo_estado not in ["ENVIADO", "ENTREGADO"]:
                 return Response(
                     {"error": "El estado proporcionado no es válido. Solo se permite cambiar a 'ENVIADO' o 'ENTREGADO'."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             # Cambios permitidos de estado
             if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADA":
                 compra.estado = "ENVIADA"
@@ -283,12 +287,53 @@ def operaciones_compras(request, id, usuario):
 
             # Guardar el cambio de estado
             compra.save()
-            
+
             # Serializar y retornar la compra actualizada
             serializer = CompraSerializer(compra)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
         except Compra.DoesNotExist:
             return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Codigo robado, esto no funciona todavia
+#
+class ProcesoPagoAPIView(APIView):
+    def post(self, request):
+        try:
+            request_values = json.loads(request.body)
+            payment_data = {
+                "transaction_amount": float(request_values["transaction_amount"]),
+                "token": request_values["token"],
+                "installments": int(request_values["installments"]),
+                "payment_method_id": request_values["payment_method_id"],
+                "issuer_id": request_values["issuer_id"],
+                "payer": {
+                    "email": request_values["payer"]["email"],
+                    "identification": {
+                        "type": request_values["payer"]["identification"]["type"],
+                        "number": request_values["payer"]["identification"]["number"]
+                    }
+                },
+
+            }
+
+            sdk = mercadopago.SDK(str(settings.MERCADOPAGO_ACCESS_TOKEN_TEST))
+
+            payment_response = sdk.payment().create(payment_data)
+
+            payment = payment_response["response"]
+            status = {
+                "id": payment["id"],
+                "status": payment["status"],
+                "status_detail": payment["status_detail"],
+            }
+
+            return Response(
+                data={"body": status, "statusCode": payment_response["status"]},
+                status=201,
+            )
+        except Exception as e:
+            return Response(data={"body": payment_response}, status=400)
