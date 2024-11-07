@@ -105,33 +105,34 @@ def google(request):
             token_google = request.data.get('token')
 
             
-
             # Verifica el token de Google
             id_info = id_token.verify_oauth2_token(token_google, requests.Request(), GOOGLE_CLIENT_ID)
 
             # Extrae la información del usuario del token
-            #google_user_id = id_info['sub']
-            #email = id_info.get('email')
-            #name = id_info.get('name')
+            google_user_id = id_info['sub']
+            email = id_info.get('email')
+            name = id_info.get('name')
 
             # Verifica si el usuario ya existe
-            #usuario, created = Usuario.objects.get_or_create(nombre=name, email=email)
+            usuario, created = Usuario.objects.get_or_create(nombre=name, email=email)
 
             # Crea una sesión o token para el usuario
-            #if created:
+            if created:
                 # Si el usuario fue creado, aquí podrías asignarle una contraseña temporal u otras configuraciones.
-                #usuario.save()
+                usuario.save()
             
             # Crea o obtiene el token de autenticación
-            #token, created = Token.objects.get_or_create(user=usuario)
+            token, created = Token.objects.get_or_create(user=usuario)
+
+            serializer = UsuarioSerializer(instance=usuario)
+            
 
             # Devuelve un token o mensaje de éxito al frontend
             return Response({
                 'success': True,
                 'message': 'Usuario autenticado exitosamente.',
-                #'user_id': usuario.idUsuario,
-                "id_info" : id_info,
-                "token" : token_google
+                'usuario': serializer.data,
+                "token" : token
             })
 
         except ValueError:
