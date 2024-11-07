@@ -109,9 +109,8 @@ def google(request):
             id_info = id_token.verify_oauth2_token(token_google, requests.Request(), GOOGLE_CLIENT_ID)
 
             # Extrae la información del usuario del token
-            google_user_id = id_info['sub']
-            email = id_info.get('email')
-            name = id_info.get('name')
+            email = id_info["email"]
+            name = id_info["name"]
 
             # Verifica si el usuario ya existe
             usuario, created = Usuario.objects.get_or_create(nombre=name, email=email)
