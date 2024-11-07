@@ -102,7 +102,7 @@ def google(request):
     if request.method == 'POST':
         try:
             # Obtén el token enviado desde el frontend
-            token_google = request.POST.get('token')
+            token_google = request.data.get('token')
 
             # Verifica el token de Google
             id_info = id_token.verify_oauth2_token(token_google, requests.Request(), GOOGLE_CLIENT_ID)
