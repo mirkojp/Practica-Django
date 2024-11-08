@@ -15,6 +15,7 @@ from rest_framework.parsers import JSONParser
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import os
+import requests as requestf
 
 
 # Create your views here.
@@ -98,7 +99,7 @@ def register(request):
 # Configura tu CLIENT_ID aquí (el ID de cliente de tu aplicación de Google)
 GOOGLE_CLIENT_ID = os.getenv("455918670543-a7apj0vtfdjc3r2e9g0m0h3mr7dr0q5u.apps.googleusercontent.com")
 @api_view(["POST"])
-def google(request):
+def register_google(request):
     if request.method == 'POST':
         try:
             # Obtén el token enviado desde el frontend
@@ -113,16 +114,17 @@ def google(request):
             name = id_info["name"]
 
             # Verifica si el usuario ya existe
-            usuario, created = Usuario.objects.get_or_create(nombre=name, email=email)
+            usuario = Usuario.objects.filter(email=email)
 
             # Crea una sesión o token para el usuario
-            if created:
-                # Si el usuario fue creado, aquí podrías asignarle una contraseña temporal u otras configuraciones.
+            if usuario:
+                return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                usuario = Usuario.objects.create(email=email, nombre=name)
                 usuario.save()
             
             # Crea o obtiene el token de autenticación
-            token, created = Token.objects.get_or_create(user=usuario)
-
+            token = Token.objects.create(user=usuario)
             serializer = UsuarioSerializer(instance=usuario)
             
 
@@ -133,12 +135,159 @@ def google(request):
                 'usuario': serializer.data,
                 "token" : token.key
             })
-
-        except ValueError:
-            # El token no es válido
-            return Response({'error': 'Token de Google no válido'}, status=400)
+        except Exception as e:
+            # Manejo de otras excepciones
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
     return Response({'error': 'Método no permitido'}, status=405)
+
+
+@api_view(["POST"])
+def login_google(request):
+    if request.method == 'POST':
+        try:
+            # Obtén el token enviado desde el frontend
+            token_google = request.data.get('token')
+
+            # Verifica el token de Google
+            id_info = id_token.verify_oauth2_token(token_google, requests.Request(), GOOGLE_CLIENT_ID)
+
+            # Extrae la información del usuario del token
+            email = id_info["email"]
+            name = id_info["name"]
+
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email, nombre=name)
+
+            # Crea una sesión o token para el usuario
+            if not usuario:
+                return Response({"error" : "Credenciales denegadas"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Crea o obtiene el token de autenticación
+            token = Token.objects.get(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
+            
+
+            # Devuelve un token o mensaje de éxito al frontend
+            return Response({
+                'success': True,
+                'message': 'Usuario autenticado exitosamente.',
+                'usuario': serializer.data,
+                "token" : token.key
+            })
+        except Exception as ex:
+            # Manejo de otras excepciones
+            return Response({"error": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+
+@api_view(["POST"])
+def register_facebook(request):
+    if request.method == 'POST':
+        try:
+            # Definir client_id y client_secret directamente en la vista
+            FACEBOOK_CLIENT_ID = '568073928919661'
+            FACEBOOK_CLIENT_SECRET = '58f711fbb1fa12b977deb8406c761add'
+
+            # Recibe el token enviado desde el frontend
+            access_token = request.data['token']
+
+            # Llama al endpoint de Facebook para obtener los datos del usuario
+            user_info_url = "https://graph.facebook.com/me"
+            params = {
+                'access_token': access_token,
+                'fields': 'id,name,email,picture'
+            }
+
+            # Realiza la solicitud a la API de Facebook
+            response = requestf.get(user_info_url, params=params)
+            response_data = response.json()
+            
+            # Si hubo un error con la solicitud a Facebook
+            if 'error' in response_data:
+                return Response({'error': response_data['error']['message']}, status=400)
+            
+            # Extrae los datos del usuario
+            name = response_data.get('name')
+            email = response_data.get('email')
+
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email)
+
+            # Crea una sesión o token para el usuario
+            if usuario:
+                return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                usuario = Usuario.objects.create(email=email, nombre=name)
+                usuario.save()
+            
+            # Crea o obtiene el token de autenticación
+            token = Token.objects.create(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
+
+            # Devuelve un token o mensaje de éxito al frontend
+            return Response({
+                'success': True,
+                'message': 'Usuario autenticado exitosamente.',
+                'usuario': serializer.data,
+                "token" : token.key
+            })
+        except Exception as e:
+            # Manejo de otras excepciones
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(["POST"])
+def login_facebook(request):
+    if request.method == 'POST':
+        try:
+            # Definir client_id y client_secret directamente en la vista
+            FACEBOOK_CLIENT_ID = '568073928919661'
+            FACEBOOK_CLIENT_SECRET = '58f711fbb1fa12b977deb8406c761add'
+
+            # Recibe el token enviado desde el frontend
+            access_token = request.data['token']
+
+            # Llama al endpoint de Facebook para obtener los datos del usuario
+            user_info_url = "https://graph.facebook.com/me"
+            params = {
+                'access_token': access_token,
+                'fields': 'id,name,email,picture'
+            }
+
+            # Realiza la solicitud a la API de Facebook
+            response = requestf.get(user_info_url, params=params)
+            response_data = response.json()
+            
+            # Si hubo un error con la solicitud a Facebook
+            if 'error' in response_data:
+                return Response({'error': response_data['error']['message']}, status=400)
+            
+            # Extrae los datos del usuario
+            name = response_data.get('name')
+            email = response_data.get('email')
+
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email, nombre=name)
+
+            # Crea una sesión o token para el usuario
+            if not usuario:
+                return Response({"error" : "Credenciales invalidas"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Crea o obtiene el token de autenticación
+            token = Token.objects.get(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
+
+            # Devuelve un token o mensaje de éxito al frontend
+            return Response({
+                'success': True,
+                'message': 'Usuario autenticado exitosamente.',
+                'usuario': serializer.data,
+                "token" : token.key
+            })
+        except Exception as e:
+            # Manejo de otras excepciones
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
