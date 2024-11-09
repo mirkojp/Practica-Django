@@ -156,11 +156,11 @@ def login_google(request):
             name = id_info["name"]
 
             # Verifica si el usuario ya existe
-            usuario = Usuario.objects.filter(email=email, nombre=name)
+            usuario = Usuario.objects.get(email=email, nombre=name)
 
             # Crea una sesión o token para el usuario
             if not usuario:
-                return Response({"error" : "Credenciales denegadas"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Crea o obtiene el token de autenticación
             token = Token.objects.get(user=usuario)
@@ -266,11 +266,11 @@ def login_facebook(request):
             email = response_data.get('email')
 
             # Verifica si el usuario ya existe
-            usuario = Usuario.objects.filter(email=email, nombre=name)
+            usuario = Usuario.objects.get(email=email, nombre=name)
 
             # Crea una sesión o token para el usuario
             if not usuario:
-                return Response({"error" : "Credenciales invalidas"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Crea o obtiene el token de autenticación
             token = Token.objects.get(user=usuario)
