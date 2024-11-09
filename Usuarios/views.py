@@ -158,9 +158,6 @@ def login_google(request):
             # Verifica si el usuario ya existe
             usuario = Usuario.objects.get(email=email, nombre=name)
 
-            # Crea una sesión o token para el usuario
-            if not usuario:
-                return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Crea o obtiene el token de autenticación
             token = Token.objects.get(user=usuario)
@@ -174,6 +171,8 @@ def login_google(request):
                 'usuario': serializer.data,
                 "token" : token.key
             })
+        except Usuario.DoesNotExist:
+            return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as ex:
             # Manejo de otras excepciones
             return Response({"error": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -186,7 +185,7 @@ def register_facebook(request):
         try:
             # Definir client_id y client_secret directamente en la vista
             FACEBOOK_CLIENT_ID = '568073928919661'
-            FACEBOOK_CLIENT_SECRET = '58f711fbb1fa12b977deb8406c761add'
+            FACEBOOK_CLIENT_SECRET = '987184f52149730f290e7d376c15c4ef'
 
             # Recibe el token enviado desde el frontend
             access_token = request.data['token']
@@ -241,7 +240,7 @@ def login_facebook(request):
         try:
             # Definir client_id y client_secret directamente en la vista
             FACEBOOK_CLIENT_ID = '568073928919661'
-            FACEBOOK_CLIENT_SECRET = '58f711fbb1fa12b977deb8406c761add'
+            FACEBOOK_CLIENT_SECRET = '987184f52149730f290e7d376c15c4ef'
 
             # Recibe el token enviado desde el frontend
             access_token = request.data['token']
@@ -268,9 +267,6 @@ def login_facebook(request):
             # Verifica si el usuario ya existe
             usuario = Usuario.objects.get(email=email, nombre=name)
 
-            # Crea una sesión o token para el usuario
-            if not usuario:
-                return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
             
             # Crea o obtiene el token de autenticación
             token = Token.objects.get(user=usuario)
@@ -283,6 +279,8 @@ def login_facebook(request):
                 'usuario': serializer.data,
                 "token" : token.key
             })
+        except Usuario.DoesNotExist:
+            return Response({"error" : "Debe registrarse primero."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
