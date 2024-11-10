@@ -16,6 +16,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 import os
 import requests as requestf
+from requests_oauthlib import OAuth1Session
 
 
 # Create your views here.
@@ -139,8 +140,6 @@ def register_google(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
-
 @api_view(["POST"])
 def login_google(request):
     if request.method == 'POST':
@@ -177,8 +176,6 @@ def login_google(request):
             # Manejo de otras excepciones
             return Response({"error": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
-
 @api_view(["POST"])
 def register_facebook(request):
     if request.method == 'POST':
@@ -285,6 +282,87 @@ def login_facebook(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+consumerKey = "jtiMOwxO7zvnACaPDuAmy9mB1"
+consumerSecret = "nqGa1pPVQp0Rh4aaYGGLQr4JNzIAUzv5iwaQIfXbFDqkoIbpet"
+# Vista para iniciar la autenticación
+@api_view(['GET'])
+def twitter_login(request):
+    twitter = OAuth1Session(consumerKey, consumerSecret)
+    request_token_url = "https://api.twitter.com/oauth/request_token"
+    
+    # Obtiene el request token de Twitter
+    try:
+        fetch_response = twitter.fetch_request_token(request_token_url)
+        authorization_url = twitter.authorization_url("https://api.twitter.com/oauth/authorize")
+        
+        # Devuelve la URL de autorización al frontend
+        return Response({"authorization_url": authorization_url}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Vista de callback que Twitter redirige con oauth_token y oauth_verifier
+@api_view(['POST'])
+def twitter_callback(request):
+    oauth_token = request.data.get('oauth_token')
+    oauth_verifier = request.data.get('oauth_verifier')
+
+    if not oauth_token or not oauth_verifier:
+        return Response({"error": "Faltan parámetros para la autenticación"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Crea una nueva sesión OAuth con el request token
+    twitter = OAuth1Session(
+        consumerKey,
+        consumerSecret,
+        resource_owner_key=oauth_token,
+        verifier=oauth_verifier
+    )
+
+    # Intercambia oauth_token y oauth_verifier por el Access Token
+    access_token_url = "https://api.twitter.com/oauth/access_token"
+    try:
+        oauth_tokens = twitter.fetch_access_token(access_token_url)
+        access_token = oauth_tokens.get('oauth_token')
+        access_token_secret = oauth_tokens.get('oauth_token_secret')
+
+        # Aquí puedes usar el access_token y access_token_secret para acceder a datos del usuario
+        # Suponemos que obtienes 'email' y 'name' del usuario (aunque Twitter no siempre proporciona email)
+        user_info_url = "https://api.twitter.com/1.1/account/verify_credentials.json?include_email=true"
+        twitter = OAuth1Session(
+            consumerKey,
+            consumerSecret,
+            resource_owner_key=access_token,
+            resource_owner_secret=access_token_secret
+        )
+        user_info = twitter.get(user_info_url).json()
+
+        # Procesa la información del usuario
+        email = user_info.get("email")
+        name = user_info.get("name")
+
+        # Verifica si el usuario ya existe
+        usuario = Usuario.objects.filter(email=email)
+
+        # Crea una sesión o token para el usuario
+        if usuario:
+            return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            usuario = Usuario.objects.create(email=email, nombre=name)
+            usuario.save()
+            
+        # Crea o obtiene el token de autenticación
+        token = Token.objects.create(user=usuario)
+        serializer = UsuarioSerializer(instance=usuario)
+        
+        return Response({
+            'success': True,
+            'message': 'Usuario autenticado exitosamente.',
+            'usuario': serializer.data,
+            "token" : token.key,
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
