@@ -18,4 +18,5 @@ urllib3
 requests
 google-auth
 mercadopago
+requests_oauthlib
 
