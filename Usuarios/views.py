@@ -290,13 +290,18 @@ def twitter_login(request):
     twitter = OAuth1Session(consumerKey, consumerSecret)
     request_token_url = "https://api.twitter.com/oauth/request_token"
     
-    # Obtiene el request token de Twitter
     try:
+        # Obtén el request token de Twitter
         fetch_response = twitter.fetch_request_token(request_token_url)
-        authorization_url = twitter.authorization_url("https://api.twitter.com/oauth/authorize")
+        oauth_token = fetch_response.get('oauth_token')
+        oauth_token_secret = fetch_response.get('oauth_token_secret')
+        
+        # Crea la URL de autorización incluyendo el oauth_token
+        authorization_url = twitter.authorization_url("https://api.twitter.com/oauth/authorize", oauth_token=oauth_token)
         
         # Devuelve la URL de autorización al frontend
         return Response({"authorization_url": authorization_url}, status=status.HTTP_200_OK)
+    
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
