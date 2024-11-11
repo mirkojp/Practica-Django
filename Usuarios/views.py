@@ -375,7 +375,7 @@ def github_login(request):
     # Redirige al usuario a la URL de autorización de GitHub
     github_auth_url = "https://github.com/login/oauth/authorize"
     redirect_uri = "https://practica-django-fxpz.onrender.com/auth/github/callback/"
-    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user:email"
+    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
     return Response({"url": url}, status=status.HTTP_200_OK)
     #return redirect(url)
 
@@ -409,15 +409,22 @@ def github_callback(request):
         headers = {'Authorization': f'token {access_token}'}
         user_info_response = requestf.get(user_info_url, headers=headers)
         user_data = user_info_response.json()
-        return Response({"user_info_response" : user_info_response, "user_data" : user_data})
 
         # Aquí puedes crear o verificar el usuario en tu base de datos
         # Ejemplo de guardar email y nombre en la BD (puede variar según tu modelo)
-        email = user_data.get("email")
-        name = user_data.get("name")
+        name = user_data.get("login")
 
+        email_url = "https://api.github.com/user/emails"
+        headers = {'Authorization': f'token {access_token}'}
+        email_response = requestf.get(email_url, headers=headers)
+        emails = email_response.json()
 
-        if email and name:
+        # Encuentra el email principal o público del usuario
+        primary_email = next((email['email'] for email in emails if email['primary']), None)
+
+        return Response({"user_info_response" : user_info_response, "user_data" : user_data, "email" : primary_email, "name" : name})
+
+        if primary_email and name:
             # Guardar o autenticar el usuario en la BD
             # Devuelve el token de autenticación al frontend
 
