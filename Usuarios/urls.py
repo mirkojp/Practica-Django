@@ -11,5 +11,6 @@ urlpatterns = [
     path('usuarios/login_facebook/', views.login_facebook, name="login_facebook"),
     path('auth/twitter/', views.twitter_login, name='twitter_login'),  # URL para iniciar el proceso de autenticación
     path('auth/twitter/callback/', views.twitter_callback, name='twitter_callback'),  # URL de callback para recibir los tokens
-    
+    path('auth/github/', views.github_login, name='github_login'),
+    path('auth/github/callback/', views.github_callback, name='github_callback'),
 ]
