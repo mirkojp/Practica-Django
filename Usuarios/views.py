@@ -429,12 +429,10 @@ def github_callback(request):
             # Devuelve el token de autenticación al frontend
 
             # Verifica si el usuario ya existe
-            usuario = Usuario.objects.filter(email=primary_email)
+            usuario = Usuario.objects.filter(email=primary_email).first()
 
             # Crea una sesión o token para el usuario
             if usuario:
-                serializer = UsuarioSerializer(instance=usuario)
-                return Response({"usuario": serializer.data})
                 if not usuario.nombre == name:
                     return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
             else:
