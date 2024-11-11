@@ -376,7 +376,8 @@ def github_login(request):
     github_auth_url = "https://github.com/login/oauth/authorize"
     redirect_uri = "https://practica-django-fxpz.onrender.com/auth/github/callback/"
     url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
-    return redirect(url)
+    return Response({"url": url}, status=status.HTTP_200_OK)
+    #return redirect(url)
 
 @api_view(['GET'])
 def github_callback(request):
