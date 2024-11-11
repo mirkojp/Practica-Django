@@ -17,6 +17,7 @@ from google.auth.transport import requests
 import os
 import requests as requestf
 from requests_oauthlib import OAuth1Session
+from django.shortcuts import redirect
 
 
 # Create your views here.
@@ -349,7 +350,8 @@ def twitter_callback(request):
 
         # Crea una sesión o token para el usuario
         if usuario:
-            return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+            if not usuario.nombre == name:
+                return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             usuario = Usuario.objects.create(email=email, nombre=name)
             usuario.save()
@@ -367,7 +369,80 @@ def twitter_callback(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(['GET'])
+def github_login(request):
+    # Redirige al usuario a la URL de autorización de GitHub
+    github_auth_url = "https://github.com/login/oauth/authorize"
+    redirect_uri = "https://tu-backend.com/auth/github/callback/"
+    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
+    return redirect(url)
+
+@api_view(['GET'])
+def github_callback(request):
         
+    try:
+        # Obtiene el `code` que GitHub envía a esta vista como parte del flujo de autorización
+        code = request.GET.get('code')
+
+        if not code:
+            return Response({"error": "Authorization failed, code missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Intercambia el código de autorización por un access token
+        token_url = "https://github.com/login/oauth/access_token"
+        data = {
+            'client_id': "Ov23liqrSR5ByM2QzZKw",
+            'client_secret': "207aa17bd8971c20c3c50268daf43bca72bbed40",
+            'code': code
+        }
+        headers = {'Accept': 'application/json'}
+        token_response = requests.post(token_url, data=data, headers=headers)
+        token_json = token_response.json()
+        access_token = token_json.get("access_token")
+
+        if not access_token:
+            return Response({"error": "Failed to retrieve access token"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Usa el access token para obtener los datos del usuario
+        user_info_url = "https://api.github.com/user"
+        headers = {'Authorization': f'token {access_token}'}
+        user_info_response = requests.get(user_info_url, headers=headers)
+        user_data = user_info_response.json()
+
+        # Aquí puedes crear o verificar el usuario en tu base de datos
+        # Ejemplo de guardar email y nombre en la BD (puede variar según tu modelo)
+        email = user_data.get("email")
+        name = user_data.get("name")
+
+
+        if email and name:
+            # Guardar o autenticar el usuario en la BD
+            # Devuelve el token de autenticación al frontend
+
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email)
+
+            # Crea una sesión o token para el usuario
+            if usuario:
+                if not usuario.nombre == name:
+                    return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                usuario = Usuario.objects.create(email=email, nombre=name)
+                usuario.save()
+                
+            # Crea o obtiene el token de autenticación
+            token = Token.objects.create(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
+
+            # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
+            frontend_url = f"https://importfunko.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
+            return redirect(frontend_url)
+
+        else:
+            return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
