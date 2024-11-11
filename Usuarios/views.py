@@ -375,7 +375,7 @@ def github_login(request):
     # Redirige al usuario a la URL de autorización de GitHub
     github_auth_url = "https://github.com/login/oauth/authorize"
     redirect_uri = "https://practica-django-fxpz.onrender.com/auth/github/callback/"
-    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
+    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user:email"
     return Response({"url": url}, status=status.HTTP_200_OK)
     #return redirect(url)
 
