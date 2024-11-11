@@ -409,6 +409,7 @@ def github_callback(request):
         headers = {'Authorization': f'token {access_token}'}
         user_info_response = requestf.get(user_info_url, headers=headers)
         user_data = user_info_response.json()
+        return Response({"user_info_response" : user_info_response, "user_data" : user_data})
 
         # Aquí puedes crear o verificar el usuario en tu base de datos
         # Ejemplo de guardar email y nombre en la BD (puede variar según tu modelo)
