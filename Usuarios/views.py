@@ -397,7 +397,7 @@ def github_callback(request):
             'code': code
         }
         headers = {'Accept': 'application/json'}
-        token_response = requests.post(token_url, data=data, headers=headers)
+        token_response = requestf.post(token_url, data=data, headers=headers)
         token_json = token_response.json()
         access_token = token_json.get("access_token")
 
@@ -407,7 +407,7 @@ def github_callback(request):
         # Usa el access token para obtener los datos del usuario
         user_info_url = "https://api.github.com/user"
         headers = {'Authorization': f'token {access_token}'}
-        user_info_response = requests.get(user_info_url, headers=headers)
+        user_info_response = requestf.get(user_info_url, headers=headers)
         user_data = user_info_response.json()
 
         # Aquí puedes crear o verificar el usuario en tu base de datos
