@@ -433,6 +433,8 @@ def github_callback(request):
 
             # Crea una sesión o token para el usuario
             if usuario:
+                serializer = UsuarioSerializer(instance=usuario)
+                return Response({"usuario": serializer.data})
                 if not usuario.nombre == name:
                     return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -440,8 +442,8 @@ def github_callback(request):
                 usuario.save()
                 
             # Crea o obtiene el token de autenticación
-            token = Token.objects.create(user=usuario)
-            serializer = UsuarioSerializer(instance=usuario)
+            token, created = Token.objects.get_or_create(user=usuario)
+            
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
             frontend_url = f"https://importfunko.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
