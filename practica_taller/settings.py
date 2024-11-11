@@ -67,13 +67,17 @@ MIDDLEWARE = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "https://superb-jalebi-af3622.netlify.app",
-    "https://practica-django-fxpz.onrender.com",
-    "https://importfunko.netlify.app",
-]  # THIS IS DANGEROUS THIS MUST NOT REACH PRODUCTION
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://localhost:8000",
+#     "https://superb-jalebi-af3622.netlify.app",
+#     "https://practica-django-fxpz.onrender.com",
+#     "https://importfunko.netlify.app",
+# ] 
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 SECURE_CROSS_ORIGIN_EMBEDDER_POLICY = 'require-corp'
