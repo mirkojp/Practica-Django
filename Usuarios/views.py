@@ -423,21 +423,20 @@ def github_callback(request):
         # Encuentra el email principal o público del usuario
         primary_email = next((email['email'] for email in emails if email['primary']), None)
 
-        return Response({"user_info_response" : user_info_response, "user_data" : user_data, "email" : primary_email, "name" : name})
 
         if primary_email and name:
             # Guardar o autenticar el usuario en la BD
             # Devuelve el token de autenticación al frontend
 
             # Verifica si el usuario ya existe
-            usuario = Usuario.objects.filter(email=email)
+            usuario = Usuario.objects.filter(email=primary_email)
 
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
                     return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                usuario = Usuario.objects.create(email=email, nombre=name)
+                usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
                 
             # Crea o obtiene el token de autenticación
