@@ -434,7 +434,8 @@ def github_callback(request):
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
-                    return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
+                    url = f'https://importfunko.netlify.app?errorIntegridad'
+                    return redirect(url)
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
