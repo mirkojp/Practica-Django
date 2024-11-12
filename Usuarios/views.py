@@ -434,7 +434,7 @@ def github_callback(request):
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
-                    url = f'https://importfunko.netlify.app?errorIntegridad'
+                    url = f'https://importfunko.netlify.app?errorIntegridad=""'
                     return redirect(url)
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
