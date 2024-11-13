@@ -346,7 +346,7 @@ def operaciones_compras(request, id, usuario):
 sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
 
 
-@method_decorator(csrf_exempt, name="dispatch")
+
 class CreatePreferenceView(View):
     def post(self, request, *args, **kwargs):
         # Datos de la preferencia
