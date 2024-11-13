@@ -17,6 +17,8 @@ from rest_framework.views import APIView
 from django.conf import settings
 import mercadopago
 import json
+from django.http import JsonResponse
+from django.views import View
 
 
 # Create your views here.
@@ -300,40 +302,65 @@ def operaciones_compras(request, id, usuario):
 
 # Codigo robado, esto no funciona todavia
 #
-class ProcesoPagoAPIView(APIView):
-    def post(self, request):
-        try:
-            request_values = json.loads(request.body)
-            payment_data = {
-                "transaction_amount": float(request_values["transaction_amount"]),
-                "token": request_values["token"],
-                "installments": int(request_values["installments"]),
-                "payment_method_id": request_values["payment_method_id"],
-                "issuer_id": request_values["issuer_id"],
-                "payer": {
-                    "email": request_values["payer"]["email"],
-                    "identification": {
-                        "type": request_values["payer"]["identification"]["type"],
-                        "number": request_values["payer"]["identification"]["number"]
-                    }
-                },
+# class ProcesoPagoAPIView(APIView):
+#     def post(self, request):
+#         try:
+#             request_values = json.loads(request.body)
+#             payment_data = {
+#                 "transaction_amount": float(request_values["transaction_amount"]),
+#                 "token": request_values["token"],
+#                 "installments": int(request_values["installments"]),
+#                 "payment_method_id": request_values["payment_method_id"],
+#                 "issuer_id": request_values["issuer_id"],
+#                 "payer": {
+#                     "email": request_values["payer"]["email"],
+#                     "identification": {
+#                         "type": request_values["payer"]["identification"]["type"],
+#                         "number": request_values["payer"]["identification"]["number"]
+#                     }
+#                 },
 
-            }
+#             }
 
-            sdk = mercadopago.SDK(str(settings.MERCADOPAGO_ACCESS_TOKEN_TEST))
+#             sdk = mercadopago.SDK(str(settings.MERCADOPAGO_ACCESS_TOKEN_TEST))
 
-            payment_response = sdk.payment().create(payment_data)
+#             payment_response = sdk.payment().create(payment_data)
 
-            payment = payment_response["response"]
-            status = {
-                "id": payment["id"],
-                "status": payment["status"],
-                "status_detail": payment["status_detail"],
-            }
+#             payment = payment_response["response"]
+#             status = {
+#                 "id": payment["id"],
+#                 "status": payment["status"],
+#                 "status_detail": payment["status_detail"],
+#             }
 
-            return Response(
-                data={"body": status, "statusCode": payment_response["status"]},
-                status=201,
-            )
-        except Exception as e:
+#             return Response(
+#                 data={"body": status, "statusCode": payment_response["status"]},
+#                 status=201,
+#             )
+#         except Exception as e:
             return Response(data={"body": payment_response}, status=400)
+
+
+# Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
+sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
+
+
+class CreatePreferenceView(View):
+    def post(self, request, *args, **kwargs):
+        # Datos de la preferencia
+        preference_data = {
+            "items": [
+                {
+                    "title": "Mi Producto",
+                    "quantity": 1,
+                    "currency_id": "ARS",  # Cambia la moneda si es necesario
+                    "unit_price": 100.0,
+                }
+            ]
+        }
+
+        # Crea la preferencia
+        preference_response = sdk.preference().create(preference_data)
+        preference_id = preference_response["response"]["id"]
+
+        return JsonResponse({"preference_id": preference_id})
