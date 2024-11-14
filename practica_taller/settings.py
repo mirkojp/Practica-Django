@@ -77,7 +77,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://practica-django-fxpz.onrender.com",
     "https://importfunko.netlify.app",
     "https://67351f81fcd97c0009b8cf05--neon-pudding-702e02.netlify.app",
-    "https://neon-pudding-702e02.netlify.app/",
+    "https://neon-pudding-702e02.netlify.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
