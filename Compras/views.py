@@ -21,6 +21,8 @@ from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils.decorators import method_decorator
+from django.middleware.csrf import get_token
+from django.http import JsonResponse
 
 # Create your views here.
 @api_view(["POST", "GET", "DELETE"])
@@ -345,9 +347,12 @@ def operaciones_compras(request, id, usuario):
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
 
+def getToken(request):
+    csrf_token = get_token(request)
+    return JsonResponse({"csrf_token": csrf_token})
+
 
 class CreatePreferenceView(View):
-    @csrf_exempt
     def post(self, request, *args, **kwargs):
         # Datos de la preferencia
         preference_data = {
