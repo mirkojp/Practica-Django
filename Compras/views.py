@@ -12,7 +12,11 @@ from django.db import IntegrityError
 from django.db import transaction
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from django.db.models import Q
-from decorators.token_decorators import token_required, token_required_admin
+from decorators.token_decorators import (
+    token_required,
+    token_required_admin,
+    token_required_without_user,
+)
 from rest_framework.views import APIView
 from django.conf import settings
 import mercadopago
@@ -23,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
+
 
 # Create your views here.
 @api_view(["POST", "GET", "DELETE"])
@@ -35,8 +40,11 @@ def carritos(request, usuario):
         id_funko = request.data.get("idFunko")
         cantidad = request.data.get("cantidad")
         if not id_funko or not cantidad:
-            return Response({"error": "Falta el ID del Funko o la cantidad."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Falta el ID del Funko o la cantidad."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
 
             # Obtener el carrito del usuario
@@ -48,16 +56,16 @@ def carritos(request, usuario):
             # Obtener el precio del Funko considerando un posible descuento
             precio_funko = funko.precio
             today = date.today()
-            
+
             descuento_activo = FunkoDescuento.objects.filter(
-                funko=funko,
-                fecha_inicio__lte=today,
-                fecha_expiracion__gte=today
+                funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
             ).first()
-            
+
             if descuento_activo:
-                descuento = Descuento.objects.get(idDescuento=descuento_activo.descuento.idDescuento)
-                precio_funko *= (1 - (descuento.porcentaje / 100))
+                descuento = Descuento.objects.get(
+                    idDescuento=descuento_activo.descuento.idDescuento
+                )
+                precio_funko *= 1 - (descuento.porcentaje / 100)
 
             # Calcular el subtotal de CarritoItem
             subtotal = precio_funko * cantidad
@@ -65,16 +73,12 @@ def carritos(request, usuario):
             # Crear el CarritoItem
             with transaction.atomic():
                 carrito_item = CarritoItem.objects.create(
-                    carrito=carrito,
-                    funko=funko,
-                    cantidad=cantidad,
-                    subtotal=subtotal
+                    carrito=carrito, funko=funko, cantidad=cantidad, subtotal=subtotal
                 )
 
                 # Actualizar el subtotal en Carrito
                 carrito.total += subtotal
                 carrito.save()
-                
 
             # Serializar el CarritoItem creado
             serializer = CarritoItemSerializer(carrito_item)
@@ -82,31 +86,43 @@ def carritos(request, usuario):
             return Response(
                 {
                     "Mensaje": "Funko agregado al carrito correctamente.",
-                    "CarritoItem": serializer.data
+                    "CarritoItem": serializer.data,
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         except Carrito.DoesNotExist:
-            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Carrito no encontrado para el usuario."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Funko.DoesNotExist:
-            return Response({"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     elif request.method == "DELETE":
 
         # Verificar que el ID del Funko fue proporcionado
         id_funko = request.data.get("idFunko")
         if not id_funko:
-            return Response({"error": "Falta el ID del Funko a eliminar."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Falta el ID del Funko a eliminar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             # Obtener el carrito del usuario
             carrito = Carrito.objects.get(usuario=usuario)
 
             # Obtener el CarritoItem con el Funko especificado
-            carrito_item = CarritoItem.objects.get(carrito=carrito, funko__idFunko=id_funko)
+            carrito_item = CarritoItem.objects.get(
+                carrito=carrito, funko__idFunko=id_funko
+            )
 
             # Actualizar el total en el carrito
             with transaction.atomic():
@@ -116,16 +132,24 @@ def carritos(request, usuario):
 
             return Response(
                 {"Mensaje": "Funko eliminado del carrito correctamente."},
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except Carrito.DoesNotExist:
-            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Carrito no encontrado para el usuario."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except CarritoItem.DoesNotExist:
-            return Response({"error": "El Funko especificado no está en el carrito."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "El Funko especificado no está en el carrito."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     elif request.method == "GET":
         try:
             # Obtener el carrito del usuario
@@ -140,15 +164,21 @@ def carritos(request, usuario):
             return Response(
                 {
                     "Mensaje": "Lista de Funkos en el carrito.",
-                    "CarritoItems": serializer.data
+                    "CarritoItems": serializer.data,
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         except Carrito.DoesNotExist:
-            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Carrito no encontrado para el usuario."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 @api_view(["POST", "GET"])
 @token_required
@@ -158,14 +188,20 @@ def compras(request, usuario):
         # Obtener el ID de la dirección desde el body de la request
         id_direccion = request.data.get("idDireccion")
         if not id_direccion:
-            return Response({"error": "Falta el ID de la dirección."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Falta el ID de la dirección."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             # Obtener el carrito del usuario y verificar si contiene items
             carrito = Carrito.objects.get(usuario=usuario)
             carrito_items = CarritoItem.objects.filter(carrito=carrito)
             if not carrito_items.exists():
-                return Response({"error": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "El carrito está vacío."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Crear la compra con valores temporales de subtotal y total
             today = date.today()
@@ -173,9 +209,9 @@ def compras(request, usuario):
                 usuario=usuario,
                 direccion_id=id_direccion,
                 subtotal=0,  # Valor temporal
-                total=0,     # Valor temporal
+                total=0,  # Valor temporal
                 fecha=today,
-                estado="PENDIENTE"
+                estado="PENDIENTE",
             )
 
             # Variables para calcular el subtotal y total de la compra
@@ -189,7 +225,7 @@ def compras(request, usuario):
                         compra=compra,
                         funko=item.funko,
                         cantidad=item.cantidad,
-                        subtotal=item.subtotal
+                        subtotal=item.subtotal,
                     )
                     # Sumar el subtotal del item al subtotal total de la compra
                     subtotal_compra += compra_item.subtotal
@@ -207,18 +243,20 @@ def compras(request, usuario):
             # Serializar y devolver la compra creada
             serializer = CompraSerializer(compra)
             return Response(
-                {
-                    "Mensaje": "Compra creada exitosamente.",
-                    "Compra": serializer.data
-                },
-                status=status.HTTP_201_CREATED
+                {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data},
+                status=status.HTTP_201_CREATED,
             )
 
         except Carrito.DoesNotExist:
-            return Response({"error": "Carrito no encontrado para el usuario."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Carrito no encontrado para el usuario."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     elif request.method == "GET":
         try:
             # Si el usuario es admin, obten todas las compras; de lo contrario, solo las compras del usuario
@@ -230,9 +268,11 @@ def compras(request, usuario):
             # Serializar las compras
             serializer = CompraSerializer(compras, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 @api_view(["PATCH", "GET"])
@@ -251,19 +291,28 @@ def operaciones_compras(request, id, usuario):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 # Si el usuario no es admin ni dueño de la compra, retornar un error
-                return Response({"error": "No tienes permiso para acceder a esta compra."}, status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {"error": "No tienes permiso para acceder a esta compra."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         except Compra.DoesNotExist:
-            return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     elif request.method == "PATCH":
         if not usuario.is_staff:
             # Solo los administradores pueden cambiar el estado de la compra
             return Response(
-                {"error": "Permiso denegado. Solo los administradores pueden cambiar el estado de una compra."},
-                status=status.HTTP_403_FORBIDDEN
+                {
+                    "error": "Permiso denegado. Solo los administradores pueden cambiar el estado de una compra."
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
@@ -275,8 +324,10 @@ def operaciones_compras(request, id, usuario):
 
             if nuevo_estado not in ["ENVIADO", "ENTREGADO"]:
                 return Response(
-                    {"error": "El estado proporcionado no es válido. Solo se permite cambiar a 'ENVIADO' o 'ENTREGADO'."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": "El estado proporcionado no es válido. Solo se permite cambiar a 'ENVIADO' o 'ENTREGADO'."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Cambios permitidos de estado
@@ -286,8 +337,10 @@ def operaciones_compras(request, id, usuario):
                 compra.estado = "ENTREGADA"
             else:
                 return Response(
-                    {"error": f"No se permite cambiar el estado de '{compra.estado}' a '{nuevo_estado}'."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": f"No se permite cambiar el estado de '{compra.estado}' a '{nuevo_estado}'."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Guardar el cambio de estado
@@ -298,9 +351,13 @@ def operaciones_compras(request, id, usuario):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Compra.DoesNotExist:
-            return Response({"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Compra no encontrada."}, status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # Codigo robado, esto no funciona todavia
@@ -345,7 +402,10 @@ def operaciones_compras(request, id, usuario):
 
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
-sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
+sdk = mercadopago.SDK(
+    settings.MERCADOPAGO_ACCESS_TOKEN_TEST
+)  # Reemplaza con tu Access Token
+
 
 @api_view(["POST"])
 @csrf_exempt
@@ -356,7 +416,7 @@ def CreatePreference(request, *args, **kwargs):
             {
                 "title": "Funko Pop Spider-Man",
                 "quantity": 1,
-                "currency_id": "ARS",  
+                "currency_id": "ARS",
                 "unit_price": 1.0,
             },
             {
@@ -383,7 +443,12 @@ def CreatePreference(request, *args, **kwargs):
                 "currency_id": "ARS",
                 "unit_price": 1.0,
             },
-        ]
+        ],
+        "back_urls": {
+            "success": "https://importfunko.netlify.app/dashboard.html",  # URL cuando el pago es exitoso
+            "failure": "https://importfunko.netlify.app/dashboard.html",  # URL cuando el pago es rechazado
+            "pending": "http://tu_dominio.com/pending",  # URL opcional para pagos pendientes
+        },
     }
 
     # Crea la preferencia
@@ -391,3 +456,102 @@ def CreatePreference(request, *args, **kwargs):
     preference_id = preference_response["response"]["id"]
 
     return JsonResponse({"preference_id": preference_id})
+
+
+@api_view(["POST"])
+@csrf_exempt
+@token_required_without_user
+def CreatePreferenceUser(request):
+    # Datos de la preferencia
+    preference_data = {
+        "items": [
+            {
+                "title": "Funko Pop Spider-Man",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Iron Man",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Captain America",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Hulk",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Thor",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+        ],
+        "back_urls": {
+            "success": "https://importfunko.netlify.app/dashboard.html",  # URL cuando el pago es exitoso
+            "failure": "https://importfunko.netlify.app/dashboard.html",  # URL cuando el pago es rechazado
+        },
+    }
+
+    # Crea la preferencia
+    preference_response = sdk.preference().create(preference_data)
+    preference_id = preference_response["response"]["id"]
+
+    return JsonResponse({"preference_id": preference_id})
+
+
+@api_view(["POST"])
+@token_required
+@csrf_exempt
+def CreatePreferenceFromCart(request, usuario):
+    try:
+        # Obtener el carrito del usuario
+        carrito = Carrito.objects.get(usuario=usuario)
+
+        # Obtener los ítems del carrito
+        carrito_items = CarritoItem.objects.filter(carrito=carrito)
+
+        # Crear la lista de ítems para MercadoPago
+        items_for_mp = []
+        for item in carrito_items:
+            funko = item.funko
+            item_data = {
+                "title": funko.nombre,  # Nombre del funko
+                "quantity": item.cantidad,  # Cantidad del ítem en el carrito
+                "currency_id": "ARS",  # Moneda
+                "unit_price": float(item.subtotal / item.cantidad),  # Precio unitario
+            }
+            items_for_mp.append(item_data)
+
+        # Datos de la preferencia
+        preference_data = {
+            "items": items_for_mp,
+            "back_urls": {
+                "success": "https://importfunko.netlify.app/dashboard.html",
+                "failure": "https://importfunko.netlify.app/dashboard.html",
+            },
+            "auto_return": "approved",
+        }
+
+        # Crear la preferencia en MercadoPago
+        preference_response = sdk.preference().create(preference_data)
+        preference_id = preference_response["response"]["id"]
+
+        return JsonResponse({"preference_id": preference_id})
+
+    except Carrito.DoesNotExist:
+        return Response(
+            {"error": "Carrito no encontrado para el usuario."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
