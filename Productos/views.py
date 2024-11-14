@@ -201,7 +201,7 @@ def favoritos(request, id):
             return Response({"message": "Este Funko no está en tu lista de favoritos."}, status=status.HTTP_200_OK)
         
         # Elimina el Funko de los favoritos del usuario
-        usuario.favoritos.delete(funko)
+        usuario.favoritos.remove(funko)
         return Response({"message": "Funko eliminado de favoritos con éxito."}, status=status.HTTP_200_OK)
 
 
