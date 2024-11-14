@@ -25,7 +25,11 @@ SECRET_KEY = 'django-insecure-7a#&u+kfmxgo$+9r&m-kb8+ra_(fvg8#_$b@)qft__1)byun(j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["practica-django-fxpz.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    "practica-django-fxpz.onrender.com",
+    "localhost", "127.0.0.1",
+    '67351f81fcd97c0009b8cf05--neon-pudding-702e02.netlify.app'
+]
 
 
 # Application definition
@@ -68,15 +72,13 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-     "http://localhost:3000",
-     "http://localhost:8000",
-     "https://superb-jalebi-af3622.netlify.app",
-     "https://practica-django-fxpz.onrender.com",
-     "https://importfunko.netlify.app",
-] 
-
-
-
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://superb-jalebi-af3622.netlify.app",
+    "https://practica-django-fxpz.onrender.com",
+    "https://importfunko.netlify.app",
+    "https://67351f81fcd97c0009b8cf05--neon-pudding-702e02.netlify.app",
+]
 
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
