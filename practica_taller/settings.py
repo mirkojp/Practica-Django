@@ -93,6 +93,7 @@ CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 SECURE_CROSS_ORIGIN_EMBEDDER_POLICY = 'require-corp'
+CSRF_COOKIE_DOMAIN = ".practica-django-fxpz.onrender.com"
 
 ROOT_URLCONF = 'practica_taller.urls'
 
