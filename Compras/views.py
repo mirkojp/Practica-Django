@@ -346,12 +346,15 @@ def operaciones_compras(request, id, usuario):
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
+
+
+
+
+@api_view(["POST"])
 @csrf_exempt
-class CreatePreferenceView(View):
-    @csrf_exempt
-    def post(self, request, *args, **kwargs):
-        # Datos de la preferencia
-        preference_data = {
+def CreatePreference(self, request, *args, **kwargs):
+    # Datos de la preferencia
+    preference_data = {
             "items": [
                 {
                     "title": "Mi Producto",
@@ -362,8 +365,8 @@ class CreatePreferenceView(View):
             ]
         }
 
-        # Crea la preferencia
-        preference_response = sdk.preference().create(preference_data)
-        preference_id = preference_response["response"]["id"]
+    # Crea la preferencia
+    preference_response = sdk.preference().create(preference_data)
+    preference_id = preference_response["response"]["id"]
 
-        return JsonResponse({"preference_id": preference_id})
+    return JsonResponse({"preference_id": preference_id})
