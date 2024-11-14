@@ -352,15 +352,39 @@ sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con t
 def CreatePreference(request, *args, **kwargs):
     # Datos de la preferencia
     preference_data = {
-            "items": [
-                {
-                    "title": "Mi Producto",
-                    "quantity": 1,
-                    "currency_id": "ARS",  # Cambia la moneda si es necesario
-                    "unit_price": 100.0,
-                }
-            ]
-        }
+        "items": [
+            {
+                "title": "Funko Pop Spider-Man",
+                "quantity": 1,
+                "currency_id": "ARS",  
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Iron Man",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Captain America",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Hulk",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+            {
+                "title": "Funko Pop Thor",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": 1.0,
+            },
+        ]
+    }
 
     # Crea la preferencia
     preference_response = sdk.preference().create(preference_data)
