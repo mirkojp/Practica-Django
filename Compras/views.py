@@ -339,7 +339,7 @@ def operaciones_compras(request, id, usuario):
 #                 status=201,
 #             )
 #         except Exception as e:
-            return Response(data={"body": payment_response}, status=400)
+#    return Response(data={"body": payment_response}, status=400)
 
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
@@ -347,7 +347,7 @@ sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con t
 
 
 class CreatePreferenceView(View):
-    @ensure_csrf_cookie
+    @csrf_exempt
     def post(self, request, *args, **kwargs):
         # Datos de la preferencia
         preference_data = {
