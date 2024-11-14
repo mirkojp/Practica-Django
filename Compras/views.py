@@ -347,12 +347,9 @@ def operaciones_compras(request, id, usuario):
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN_TEST)  # Reemplaza con tu Access Token
 
-
-
-
 @api_view(["POST"])
 @csrf_exempt
-def CreatePreference(self, request, *args, **kwargs):
+def CreatePreference(request, *args, **kwargs):
     # Datos de la preferencia
     preference_data = {
             "items": [
