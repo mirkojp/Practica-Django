@@ -21,4 +21,4 @@ mercadopago
 requests_oauthlib
 python-dotenv
 django-environ
-
+cloudinary
