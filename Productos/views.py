@@ -15,6 +15,9 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from decorators.token_decorators import token_required_admin_without_user
 from .services import generate_signature
+import cloudinary
+
+
 # Create your views here.
 @api_view(["POST", "GET"]) #Resuelve crear y listar funkos
 def funkos(request):
@@ -661,14 +664,25 @@ class ImagenView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    def post(self, request):
-        """Handles image creation and optionally provides a Cloudinary signed URL."""
-        try:
-            action = request.query_params.get("action")
-            if action == "sign":
-                signature_data = generate_signature()
-                return Response(signature_data, status=status.HTTP_200_OK)
 
+class ImageUploadView(APIView):
+    def post(self, request):
+        """Creates a Cloudinary signed URL, then saves the image."""
+        try:
+            # Step 1: Generate Cloudinary signed URL
+            signature_data = generate_signature()
+            if not signature_data:
+                return Response(
+                    {"error": "Failed to generate Cloudinary signature"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            # Step 2: Attach the signed URL to request data
+            request.data["cloudinary_signature"] = (
+                signature_data  # Adjust based on how you use it
+            )
+
+            # Step 3: Validate and save the image
             serializer = ImagenSerializer(data=request.data)
             if serializer.is_valid():
                 imagen = serializer.save()
@@ -676,18 +690,31 @@ class ImagenView(APIView):
                     {
                         "mensaje": "Imagen creada correctamente",
                         "idImagen": imagen.idImagen,
+                        "cloudinary_signature": signature_data,  # Return signature if needed
                     },
                     status=status.HTTP_201_CREATED,
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
     def put(self, request, idImagen):
+        """Updates an image, replacing the existing one in Cloudinary."""
         try:
+            # Step 1: Retrieve the existing image
             imagen = get_object_or_404(Imagen, idImagen=idImagen)
+            old_image_url = imagen.image_url  # Assuming this is the field storing the Cloudinary URL
+
+            # Step 2: If a new image is provided, delete the old one from Cloudinary
+            new_image = request.data.get("image")
+            if new_image and old_image_url:
+                # Extract public_id from the Cloudinary URL
+                public_id = old_image_url.split("/")[-1].split(".")[0]
+                cloudinary.uploader.destroy(public_id)  # Delete old image
+
+            # Step 3: Update the database record with new data (including image)
             serializer = ImagenSerializer(imagen, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -696,12 +723,14 @@ class ImagenView(APIView):
                     status=status.HTTP_200_OK,
                 )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     def delete(self, request, idImagen):
+        #check
         try:
             imagen = get_object_or_404(Imagen, idImagen=idImagen)
             imagen.delete()
