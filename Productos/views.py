@@ -648,6 +648,7 @@ def op_categorias(request, id):
 
 
 # @token_required_admin_without_user
+@api_view([(["POST", "GET"])])
 class ImagenView(APIView):
     def get(self, request, idImagen=None):
         try:
@@ -664,8 +665,6 @@ class ImagenView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class ImageUploadView(APIView):
     def post(self, request):
         """Creates a Cloudinary signed URL, then saves the image."""
         try:
