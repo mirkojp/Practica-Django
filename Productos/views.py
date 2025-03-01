@@ -664,8 +664,6 @@ class ImagenView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class ImageUploadView(APIView):
     def post(self, request):
         """Creates a Cloudinary signed URL, then saves the image."""
         try:
