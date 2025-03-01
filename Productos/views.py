@@ -7,13 +7,14 @@ from rest_framework import status
 from Usuarios.models import Token, Usuario
 from .models import Funko, Imagen
 from .models import Descuento, FunkoDescuento, Categoría
-from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer
+from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer,ImagenSerializer
 from django.db import IntegrityError
 from django.db import transaction
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from django.db.models import Q
 from rest_framework.views import APIView
 from decorators.token_decorators import token_required_admin_without_user
+from .services import generate_signature
 # Create your views here.
 @api_view(["POST", "GET"]) #Resuelve crear y listar funkos
 def funkos(request):
@@ -642,67 +643,73 @@ def op_categorias(request, id):
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
 
-#@token_required_admin_without_user
+
+# @token_required_admin_without_user
 class ImagenView(APIView):
-
     def get(self, request, idImagen=None):
-        if idImagen:
-            imagen = get_object_or_404(Imagen, idImagen=idImagen)
-            datos = {
-                "idImagen": imagen.idImagen,
-                "clave": imagen.clave,
-                "url": imagen.url,
-                "nombre": imagen.nombre,
-                "ancho": imagen.ancho,
-                "alto": imagen.alto,
-                "formato": imagen.formato,
-                "creado": imagen.creado.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            return Response(datos, status=status.HTTP_200_OK)
-        else:
-            imagenes = Imagen.objects.all().values()
-            return Response(list(imagenes), status=status.HTTP_200_OK)
-
-    def post(self, request):
         try:
-            datos = json.loads(request.body)
-            imagen = Imagen.objects.create(
-                clave=datos["clave"],
-                url=datos["url"],
-                nombre=datos["nombre"],
-                ancho=datos["ancho"],
-                alto=datos["alto"],
-                formato=datos["formato"],
-            )
+            if idImagen:
+                imagen = get_object_or_404(Imagen, idImagen=idImagen)
+                serializer = ImagenSerializer(imagen)
+                return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(
-                {"mensaje": "Imagen creada correctamente", "idImagen": imagen.idImagen},
-                status=status.HTTP_201_CREATED,
+                {"error": "ID de imagen no proporcionado"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """Handles image creation and optionally provides a Cloudinary signed URL."""
+        try:
+            action = request.query_params.get("action")
+            if action == "sign":
+                signature_data = generate_signature()
+                return Response(signature_data, status=status.HTTP_200_OK)
+
+            serializer = ImagenSerializer(data=request.data)
+            if serializer.is_valid():
+                imagen = serializer.save()
+                return Response(
+                    {
+                        "mensaje": "Imagen creada correctamente",
+                        "idImagen": imagen.idImagen,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def put(self, request, idImagen):
         try:
-            datos = json.loads(request.body)
             imagen = get_object_or_404(Imagen, idImagen=idImagen)
-            imagen.clave = datos.get("clave", imagen.clave)
-            imagen.url = datos.get("url", imagen.url)
-            imagen.nombre = datos.get("nombre", imagen.nombre)
-            imagen.ancho = datos.get("ancho", imagen.ancho)
-            imagen.alto = datos.get("alto", imagen.alto)
-            imagen.formato = datos.get("formato", imagen.formato)
-            imagen.save()
-            return Response(
-                {"mensaje": "Imagen actualizada correctamente"},
-                status=status.HTTP_200_OK,
-            )
+            serializer = ImagenSerializer(imagen, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"mensaje": "Imagen actualizada correctamente"},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def delete(self, request, idImagen):
-        imagen = get_object_or_404(Imagen, idImagen=idImagen)
-        imagen.delete()
-        return Response(
-            {"mensaje": "Imagen eliminada correctamente"},
-            status=status.HTTP_204_NO_CONTENT,
-        )
+        try:
+            imagen = get_object_or_404(Imagen, idImagen=idImagen)
+            imagen.delete()
+            return Response(
+                {"mensaje": "Imagen eliminada correctamente"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

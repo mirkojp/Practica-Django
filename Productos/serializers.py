@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Funko, Descuento, FunkoDescuento, Categoría
+from .models import Funko, Descuento, FunkoDescuento, Categoría, Imagen
 
 class FunkoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +20,8 @@ class CategoríaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoría
         fields = ["idCategoria", "nombre"]
+
+class ImagenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Imagen
+        fields = "__all__"
