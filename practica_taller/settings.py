@@ -123,6 +123,18 @@ WSGI_APPLICATION = 'practica_taller.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'default_db_name'),
+        'USER': os.environ.get('DB_USER', 'default_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'default_password'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
+}
+"""
 env = environ.Env()
 environ.Env.read_env()  # Lee el archivo .env
 
@@ -135,7 +147,7 @@ DATABASES = {
         'HOST': env('DB_HOST'),
         'PORT': env('DB_PORT'),
     }
-}
+}"""
 """tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
 print(tmpPostgres)
 DATABASES = {
