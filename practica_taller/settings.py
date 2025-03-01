@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import environ
+from dotenv import load_dotenv
+from urllib.parse import urlparse
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,12 +122,41 @@ WSGI_APPLICATION = 'practica_taller.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+env = environ.Env()
+environ.Env.read_env()  # Lee el archivo .env
+
 DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
+    }
+}
+"""tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+print(tmpPostgres)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # Motor de PostgreSQL
+        'NAME': tmpPostgres.path[1:],  # Eliminar la barra inicial ("/") en el nombre de la base de datos
+        'USER': tmpPostgres.username,
+        'PASSWORD': tmpPostgres.password,
+        'HOST': tmpPostgres.hostname,
+        'PORT': tmpPostgres.port or 5432,  # Si no se especifica el puerto, usar el puerto estándar de PostgreSQL (5432)
+        'OPTIONS': {
+            'sslmode': 'require',  # Asegura que se use SSL para la conexión
+        },
+    }
+}"""
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+}"""
 
 AUTH_USER_MODEL = 'Usuarios.Usuario'
 
