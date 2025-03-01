@@ -1,10 +1,24 @@
 from rest_framework import serializers
 from .models import Funko, Descuento, FunkoDescuento, Categoría, Imagen
 
+
 class FunkoSerializer(serializers.ModelSerializer):
+    imagen = serializers.IntegerField(
+        source="imagen.idImagen", allow_null=True, required=False
+    )
+
     class Meta:
         model = Funko
-        fields = ["idFunko", "nombre", "descripción", "is_backlight", "stock", "precio"]
+        fields = [
+            "idFunko",
+            "nombre",
+            "descripción",
+            "is_backlight",
+            "stock",
+            "precio",
+            "imagen",
+        ]
+
 
 class DescuentoSerializer(serializers.ModelSerializer):
     class Meta:
