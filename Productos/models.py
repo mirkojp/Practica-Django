@@ -6,9 +6,7 @@ from num2words import num2words
 
 class Imagen(models.Model):
     idImagen = models.AutoField(primary_key=True)
-    clave = models.CharField(
-        max_length=100, help_text="Identificador en Cloudinary o S3"
-    )
+    clave = models.CharField(max_length=100, help_text="Identificador en Cloudinary o S3")
     url = models.CharField(max_length=255)
     nombre = models.CharField(max_length=100, help_text="Nombre original de la imagen")
     ancho = models.IntegerField()
