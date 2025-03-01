@@ -19,4 +19,6 @@ requests
 google-auth
 mercadopago
 requests_oauthlib
+python-dotenv
+django-environ
 
