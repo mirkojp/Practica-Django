@@ -689,7 +689,7 @@ class ImagenView(APIView):
                 api_key=signature_data["api_key"],
                 timestamp=signature_data["timestamp"],
                 signature=signature_data["signature"],
-                upload_preset="your_upload_preset",  # Optional: If using unsigned uploads
+                #upload_preset="your_upload_preset",  # Optional: If using unsigned uploads
             )
 
             # Step 4: Create image data dictionary
