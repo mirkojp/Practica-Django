@@ -640,3 +640,54 @@ def op_categorias(request, id):
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST", "DELETE"])
+def gestionar_funkos_categoria(request, id):
+    # Verifica si el usuario es administrador
+    usuario, error_response = adminAuthorization(request)
+    if error_response:
+        return error_response
+
+    try:
+        # Intenta obtener la categoría por ID
+        categoria = Categoría.objects.get(idCategoria=id)
+    except Categoría.DoesNotExist:
+        return Response({"error": "Categoría no encontrada con ese ID."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Verifica que la solicitud tenga la lista de IDs de Funkos
+    funkos_ids = request.data.get("funkos", [])
+    if not isinstance(funkos_ids, list) or not funkos_ids:
+        return Response({"error": "Debes proporcionar una lista de IDs de Funkos."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Filtra los Funkos que existen en la base de datos
+        funkos = Funko.objects.filter(idFunko__in=funkos_ids)
+
+        # Verifica si hay IDs que no existen
+        ids_encontrados = set(funkos.values_list("idFunko", flat=True))
+        ids_no_encontrados = set(funkos_ids) - ids_encontrados
+
+        if ids_no_encontrados:
+            return Response({"error": f"Algunos Funkos no existen: {list(ids_no_encontrados)}"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == "POST":
+            # Agregar Funkos a la categoría
+            categoria.funkos.add(*funkos)
+            mensaje = "Funkos agregados correctamente a la categoría."
+        elif request.method == "DELETE":
+            # Eliminar Funkos de la categoría
+            categoria.funkos.remove(*funkos)
+            mensaje = "Funkos eliminados correctamente de la categoría."
+
+        return Response(
+            {
+                "mensaje": mensaje,
+                "categoria": CategoríaSerializer(categoria).data,
+            },
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
