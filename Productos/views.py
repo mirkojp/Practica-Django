@@ -665,39 +665,63 @@ class ImagenView(APIView):
             )
 
     def post(self, request):
-        """Creates a Cloudinary signed URL, then saves the image."""
+        """Uploads the image to Cloudinary and saves the metadata in the database."""
         try:
             # Step 1: Generate Cloudinary signed URL
             signature_data = generate_signature()
-            if not signature_data:
+            if "error" in signature_data:
                 return Response(
                     {"error": "Failed to generate Cloudinary signature"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
-            # Step 2: Attach the signed URL to request data
-            request.data["cloudinary_signature"] = (
-                signature_data  # Adjust based on how you use it
+            # Step 2: Get image file from request
+            image_file = request.FILES.get("image")  # The frontend must send the file
+            if not image_file:
+                return Response(
+                    {"error": "No image file provided"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Step 3: Upload image to Cloudinary
+            upload_response = cloudinary.uploader.upload(
+                image_file,
+                api_key=signature_data["api_key"],
+                timestamp=signature_data["timestamp"],
+                signature=signature_data["signature"],
+                upload_preset="your_upload_preset",  # Optional: If using unsigned uploads
             )
 
-            # Step 3: Validate and save the image
-            serializer = ImagenSerializer(data=request.data)
+            # Step 4: Create image data dictionary
+            image_data = {
+                "clave": upload_response["public_id"],  # Cloudinary identifier
+                "url": upload_response["secure_url"],  # Cloudinary image URL
+                "nombre": upload_response["original_filename"],  # Original filename
+                "ancho": upload_response["width"],  # Image width
+                "alto": upload_response["height"],  # Image height
+                "formato": upload_response["format"],  # Image format
+            }
+
+            # Step 5: Validate and save in Django database
+            serializer = ImagenSerializer(data=image_data)
             if serializer.is_valid():
                 imagen = serializer.save()
                 return Response(
                     {
                         "mensaje": "Imagen creada correctamente",
                         "idImagen": imagen.idImagen,
-                        "cloudinary_signature": signature_data,  # Return signature if needed
+                        "image_url": imagen.url,  # Returning the image URL
                     },
                     status=status.HTTP_201_CREATED,
                 )
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
     def put(self, request, idImagen):
         """Updates an image, replacing the existing one in Cloudinary."""
         try:
@@ -728,7 +752,7 @@ class ImagenView(APIView):
             )
 
     def delete(self, request, idImagen):
-        #check
+        # check
         try:
             imagen = get_object_or_404(Imagen, idImagen=idImagen)
             imagen.delete()
