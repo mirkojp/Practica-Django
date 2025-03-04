@@ -1,16 +1,21 @@
+import json
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from Usuarios.models import Token, Usuario
-from .models import Funko
+from .models import Funko, Imagen
 from .models import Descuento, FunkoDescuento, Categoría
-from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer
+from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer,ImagenSerializer
 from django.db import IntegrityError
 from django.db import transaction
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from django.db.models import Q
+from rest_framework.views import APIView
+from decorators.token_decorators import token_required_admin_without_user
+from .services import generate_signature
+import cloudinary
 
 
 # Create your views here.
@@ -77,7 +82,7 @@ def funkos(request):
             },
             status=status.HTTP_200_OK
         )
-    
+
 @api_view(["GET", "PUT", "DELETE"]) #Resuelve listar un funko, eliminarlo y modificarlo
 def operaciones_funkos(request, id):
 
@@ -253,7 +258,7 @@ def descuentos(request):     #Resuelve crear y listar los descuentos
         
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 @api_view(["GET", "PUT", "DELETE"])
 def operaciones_descuentos(request, id): #Resuelve listar un Descuento, eliminarlo y modificarlo
 
@@ -413,7 +418,7 @@ def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
             },
             status=status.HTTP_200_OK
         )
-    
+
 @api_view(["DELETE", "PUT", "GET"])
 def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, eliminarlo y modificarlo
 
@@ -504,7 +509,7 @@ def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, elimi
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
-        
+
 @api_view(["POST", "GET"])
 def categorias(request):
 
@@ -564,7 +569,7 @@ def categorias(request):
         
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["DELETE", "PUT", "GET"])
 def op_categorias(request, id):
 
@@ -573,10 +578,10 @@ def op_categorias(request, id):
 
     if error_response: # Retorna el error si el token es inválido o no encontrado
         return error_response
-    
+
     if request.method == 'GET': 
         try:
-            # Intentar obtener la Categoria por el id 
+            # Intentar obtener la Categoria por el id
             categoria = Categoría.objects.get(idCategoria=id)
             serializer = CategoríaSerializer(categoria)
 
@@ -591,14 +596,14 @@ def op_categorias(request, id):
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
-        
+
     elif request.method == "PUT":
-        #Verifica que la request tenga todos los datos necesarios
+        # Verifica que la request tenga todos los datos necesarios
         serializer = CategoríaSerializer(data=request.data)
 
         if serializer.is_valid():
             try:
-                # Intentar obtener la Categoria por el id 
+                # Intentar obtener la Categoria por el id
                 categoria = Categoría.objects.get(idCategoria=id)
 
                 # Validar que no exista otra Categoria con el mismo nombre (excluyendo la actual)
@@ -607,11 +612,11 @@ def op_categorias(request, id):
                         {"error": "Ya existe una Categoria con el mismo nombre"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                        
+
                 categoria.nombre = serializer.data["nombre"]
                 serializer = CategoríaSerializer(categoria)
                 categoria.save()
-                
+
                 return Response(
                     {
                         "Mensaje": "Recurso actualizado correctamente",
@@ -626,20 +631,138 @@ def op_categorias(request, id):
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
     elif request.method == "DELETE":
         try:
-            # Intentar obtener la Categoria por el id 
+            # Intentar obtener la Categoria por el id
             categoria = Categoría.objects.get(idCategoria=id)
             categoria.delete()
 
             return Response(status=status.HTTP_200_OK)
-        
+
         except Categoría.DoesNotExist:
             return Response({"error": "Categoria no encontrada con ese ID."}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
+# @token_required_admin_without_user
+class ImagenView(APIView):
+    def get(self, request, idImagen=None):
+        try:
+            if idImagen:
+                imagen = get_object_or_404(Imagen, idImagen=idImagen)
+                serializer = ImagenSerializer(imagen)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {"error": "ID de imagen no proporcionado"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """Uploads the image to Cloudinary and saves the metadata in the database."""
+        try:
+            # Step 1: Generate Cloudinary signed URL
+            signature_data = generate_signature()
+            if "error" in signature_data:
+                return Response(
+                    {"error": "Failed to generate Cloudinary signature"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            # Step 2: Get image file from request
+            image_file = request.FILES.get("image")  # The frontend must send the file
+            if not image_file:
+                return Response(
+                    {"error": "No image file provided"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Step 3: Upload image to Cloudinary
+            upload_response = cloudinary.uploader.upload(
+                image_file,
+                api_key=signature_data["api_key"],
+                timestamp=signature_data["timestamp"],
+                signature=signature_data["signature"],
+                #upload_preset="your_upload_preset",  # Optional: If using unsigned uploads
+            )
+
+            # Step 4: Create image data dictionary
+            image_data = {
+                "clave": upload_response["public_id"],  # Cloudinary identifier
+                "url": upload_response["secure_url"],  # Cloudinary image URL
+                "nombre": upload_response["original_filename"],  # Original filename
+                "ancho": upload_response["width"],  # Image width
+                "alto": upload_response["height"],  # Image height
+                "formato": upload_response["format"],  # Image format
+            }
+
+            # Step 5: Validate and save in Django database
+            serializer = ImagenSerializer(data=image_data)
+            if serializer.is_valid():
+                imagen = serializer.save()
+                return Response(
+                    {
+                        "mensaje": "Imagen creada correctamente",
+                        "idImagen": imagen.idImagen,
+                        "image_url": imagen.url,  # Returning the image URL
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def put(self, request, idImagen):
+        """Updates an image, replacing the existing one in Cloudinary."""
+        try:
+            # Step 1: Retrieve the existing image
+            imagen = get_object_or_404(Imagen, idImagen=idImagen)
+            old_image_url = imagen.image_url  # Assuming this is the field storing the Cloudinary URL
+
+            # Step 2: If a new image is provided, delete the old one from Cloudinary
+            new_image = request.data.get("image")
+            if new_image and old_image_url:
+                # Extract public_id from the Cloudinary URL
+                public_id = old_image_url.split("/")[-1].split(".")[0]
+                cloudinary.uploader.destroy(public_id)  # Delete old image
+
+            # Step 3: Update the database record with new data (including image)
+            serializer = ImagenSerializer(imagen, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"mensaje": "Imagen actualizada correctamente"},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, idImagen):
+        # check
+        try:
+            imagen = get_object_or_404(Imagen, idImagen=idImagen)
+            imagen.delete()
+            return Response(
+                {"mensaje": "Imagen eliminada correctamente"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 @api_view(["POST", "DELETE"])
 def gestionar_funkos_categoria(request, id):
@@ -690,4 +813,3 @@ def gestionar_funkos_categoria(request, id):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-

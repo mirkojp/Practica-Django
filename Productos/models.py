@@ -4,6 +4,18 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from num2words import num2words
 
 
+class Imagen(models.Model):
+    idImagen = models.AutoField(primary_key=True)
+    clave = models.CharField(max_length=100, help_text="Identificador en Cloudinary o S3")
+    url = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=100, help_text="Nombre original de la imagen")
+    ancho = models.IntegerField()
+    alto = models.IntegerField()
+    formato = models.CharField(max_length=10)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.nombre} ({self.idImagen})"
 
 
 class Categoría(models.Model):
@@ -12,7 +24,7 @@ class Categoría(models.Model):
 
     def __str__(self):
         return self.nombre
-    
+
 class Descuento(models.Model):
     idDescuento = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100, editable=False, null=False, blank=False)
@@ -34,11 +46,13 @@ class Funko(models.Model):
     stock = models.PositiveIntegerField(null=False, blank=False)
     precio = models.IntegerField()
 
-    #Relaciones
+    # Relaciones
     categoría = models.ManyToManyField(Categoría)
+    imagen = models.OneToOneField(Imagen, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.nombre} - Stock: {self.stock} - Precio: {self.precio}"
+
 
 class FunkoDescuento(models.Model):
     idFunkoDescuento = models.AutoField(primary_key=True)
