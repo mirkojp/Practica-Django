@@ -14,5 +14,5 @@ urlpatterns = [
     path('categorias/<int:id>', views.op_categorias, name="op_categorias"),
     path("imagen/", ImagenView.as_view(), name="crear_listar_imagenes"),
     path("imagen/<int:idImagen>/", ImagenView.as_view(), name="detalle_imagen"),
-    
+    path('categorias/<int:id>/gestionar', views.gestionar_funkos_categoria, name="gestionar_funkos_categoria"),
 ]
