@@ -15,4 +15,5 @@ urlpatterns = [
     path("imagen/", ImagenView.as_view(), name="crear_listar_imagenes"),
     path("imagen/<int:idImagen>/", ImagenView.as_view(), name="detalle_imagen"),
     path('categorias/<int:id>/gestionar', views.gestionar_funkos_categoria, name="gestionar_funkos_categoria"),
+    path('funkos/<int:id>/reseñas', views.listar_reseñas_funko, name="listar_reseñas_funko"),
 ]

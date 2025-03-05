@@ -2,12 +2,13 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from .models import Token
+from .models import Token, Reseña
 from rest_framework import status
 from django.contrib.auth.models import User
-from .serializers import UsuarioSerializer
+from .serializers import UsuarioSerializer, ReseñaSerializer
 from .models import Usuario
-from Compras.models import Carrito
+from Compras.models import Carrito, CarritoItem, Compra
+from Compras.serializers import CarritoItemSerializer, CompraSerializer
 from django.db import IntegrityError
 from django.db import transaction
 from Utils.validarcontacto import validar_contacto
@@ -18,6 +19,9 @@ import os
 import requests as requestf
 from requests_oauthlib import OAuth1Session
 from django.shortcuts import redirect
+from Utils.tokenAuthorization import userAuthorization, adminAuthorization
+from Productos.models import Funko
+from Productos.serializers import FunkoSerializer
 
 
 # Create your views here.
@@ -572,3 +576,145 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(["POST", "GET"])
+def reseñas(request):
+    # Verifica si el usuario está autenticado
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    if request.method == "POST":
+        # Obtener datos del cuerpo de la petición
+        data = request.data.copy()  # Copiamos los datos para modificarlos si es necesario
+        data["usuario"] = usuario.idUsuario  # Asigna el usuario autenticado a la reseña
+
+        # Verifica si el funko existe antes de crear la reseña
+        funko_id = data.get("funko")
+        if funko_id:
+            try:
+                Funko.objects.get(idFunko=funko_id)
+            except Funko.DoesNotExist:
+                return Response({"error": "El Funko especificado no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serializar y guardar la reseña
+        serializer = ReseñaSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "GET":
+        # Listar todas las reseñas
+        reseñas = Reseña.objects.all().order_by("-fecha")  # Ordenadas por fecha más reciente
+        serializer = ReseñaSerializer(reseñas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+@api_view(["GET", "DELETE"])
+def gestionar_reseña(request, id):
+    # Verifica si el usuario está autenticado
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    try:
+        # Obtener la reseña por ID
+        reseña = Reseña.objects.get(idReseña=id)
+    except Reseña.DoesNotExist:
+        return Response({"error": "Reseña no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        # Serializar y devolver la reseña
+        serializer = ReseñaSerializer(reseña)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "DELETE":
+        # Verificar que el usuario sea dueño de la reseña antes de borrarla
+        if reseña.usuario != usuario:
+            return Response({"error": "No tienes permiso para borrar esta reseña."}, status=status.HTTP_403_FORBIDDEN)
+
+        reseña.delete()
+        return Response({"mensaje": "Reseña eliminada correctamente."}, status=status.HTTP_200_OK)
+    
+@api_view(["GET"])
+def listar_favoritos(request):
+    # Verifica la autenticación del usuario
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    # Obtener los Funkos favoritos del usuario
+    favoritos = usuario.favoritos.all()
+    
+    # Serializar los datos
+    serializer = FunkoSerializer(favoritos, many=True)
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def listar_carrito(request, id):
+    # Verifica autenticación del usuario
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    # Verificar que el usuario autenticado es el mismo del ID solicitado
+    if usuario.idUsuario != id:
+        return Response({"error": "No tienes permiso para ver este carrito."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        # Buscar el carrito del usuario
+        carrito = Carrito.objects.get(usuario=usuario)
+    except Carrito.DoesNotExist:
+        return Response({"error": "Carrito no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Obtener los items del carrito
+    items = CarritoItem.objects.filter(carrito=carrito)
+
+    # Serializar los datos
+    serializer = CarritoItemSerializer(items, many=True)
+
+    return Response({
+        "idCarrito": carrito.idCarrito,
+        "total": carrito.total,
+        "items": serializer.data
+    }, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def listar_compras(request, id):
+    # Verifica autenticación del usuario
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    # Verificar que el usuario autenticado es el mismo del ID solicitado
+    if usuario.idUsuario != id:
+        return Response({"error": "No tienes permiso para ver estas compras."}, status=status.HTTP_403_FORBIDDEN)
+
+    # Obtener las compras del usuario
+    compras = Compra.objects.filter(usuario=usuario)
+
+    # Serializar los datos
+    serializer = CompraSerializer(compras, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def listar_reseñas_usuario(request, id):
+    # Verifica autenticación del usuario
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    # Verificar que el usuario autenticado es el mismo del ID solicitado
+    if usuario.idUsuario != id:
+        return Response({"error": "No tienes permiso para ver estas reseñas."}, status=status.HTTP_403_FORBIDDEN)
+
+    # Obtener las reseñas del usuario
+    reseñas = Reseña.objects.filter(usuario=usuario)
+
+    # Serializar los datos
+    serializer = ReseñaSerializer(reseñas, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
