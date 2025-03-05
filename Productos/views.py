@@ -4,7 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from Usuarios.models import Token, Usuario
+from Usuarios.models import Token, Usuario, Reseña
+from Usuarios.serializers import ReseñaSerializer
 from .models import Funko, Imagen
 from .models import Descuento, FunkoDescuento, Categoría
 from .serializers import FunkoSerializer, DescuentoSerializer, FunkoDescuentoSerializer, CategoríaSerializer,ImagenSerializer
@@ -16,6 +17,7 @@ from rest_framework.views import APIView
 from decorators.token_decorators import token_required_admin_without_user
 from .services import generate_signature
 import cloudinary
+
 
 
 # Create your views here.
@@ -813,3 +815,23 @@ def gestionar_funkos_categoria(request, id):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+@api_view(["GET"])
+def listar_reseñas_funko(request, id):
+    # Verifica autenticación del usuario
+    usuario, error_response = userAuthorization(request)
+    if error_response:
+        return error_response
+
+    try:
+        # Verifica que el Funko existe
+        funko = Funko.objects.get(idFunko=id)
+    except Funko.DoesNotExist:
+        return Response({"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Obtiene las reseñas del Funko
+    reseñas = Reseña.objects.filter(funko=funko)
+
+    # Serializa los datos
+    serializer = ReseñaSerializer(reseñas, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
