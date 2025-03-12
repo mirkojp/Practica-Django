@@ -20,5 +20,5 @@ urlpatterns = [
         name="calles_por_localidad_censal",
     ),
     path("crear-direccion/", crear_direccion, name="crear_direccion"),
-    path("direcciones/", obtener_direccion, name="direcciones"),
+    path("direcciones/<int:id>", obtener_direccion, name="direcciones"),
 ]
