@@ -295,7 +295,7 @@ def funkos(request):
 #                     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 #         elif request.method == 'DELETE': #Borrar funko segun id
 #             # Borra el funko
 #             funko.delete()
@@ -1067,3 +1067,21 @@ def listar_reseñas_funko(request, id):
     serializer = ReseñaSerializer(reseñas, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class ImagenListView(APIView):
+    def get(self, request, imagen_id=None):
+        if imagen_id:
+            try:
+                imagen = Imagen.objects.get(pk=imagen_id)
+                serializer = ImagenSerializer(imagen)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Imagen.DoesNotExist:
+                return Response(
+                    {"error": "Imagen no encontrada"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+        imagenes = Imagen.objects.all()
+        serializer = ImagenSerializer(imagenes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
