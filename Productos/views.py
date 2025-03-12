@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from decorators.token_decorators import token_required_admin_without_user
 from .services import upload_image_to_cloudinary, delete_image_from_cloudinary
 import cloudinary
+from django.utils.decorators import method_decorator
 
 @api_view(["POST", "GET"]) #Resuelve crear y listar funkos
 def old_Funkos(request):
@@ -1116,7 +1117,7 @@ def listar_reseñas_funko(request, id):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@token_required_admin_without_user
+@method_decorator(token_required_admin_without_user, name="dispatch")
 class ImagenListView(APIView):
     def post(self, request):
         if "imagen" not in request.FILES:
