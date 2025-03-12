@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import ImagenView
+from .views import ImagenListView
 
 urlpatterns = [
     path('funkos', views.funkos, name="funkos"),
@@ -12,8 +12,8 @@ urlpatterns = [
     path('funkodescuentos/<int:id>', views.op_funkoDescuentos, name="op_funkoDescuentos"),
     path('categorias', views.categorias, name="categorias"),
     path('categorias/<int:id>', views.op_categorias, name="op_categorias"),
-    path("imagen/", ImagenView.as_view(), name="crear_listar_imagenes"),
-    path("imagen/<int:idImagen>/", ImagenView.as_view(), name="detalle_imagen"),
+    path('imagenes/', ImagenListView.as_view(), name='imagenes-list'),
+    path('imagenes/<int:imagen_id>/', ImagenListView.as_view(), name='imagen-detail'),
     path('categorias/<int:id>/gestionar', views.gestionar_funkos_categoria, name="gestionar_funkos_categoria"),
     path('funkos/<int:id>/reseñas', views.listar_reseñas_funko, name="listar_reseñas_funko"),
 ]
