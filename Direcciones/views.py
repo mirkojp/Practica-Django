@@ -301,3 +301,16 @@ def listar_direccion_por_compra(request, idCompra):
             {"error": "Error interno del servidor", "detalle": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+@api_view(["GET"])
+@token_required_without_user
+def obtener_direccion(request, id):
+    try:
+        # Busca la dirección por ID
+        direccion = Dirección.objects.get(idDireccion=id)
+    except Dirección.DoesNotExist:
+        return Response({"error": "Dirección no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Serializa la dirección y la retorna
+    serializer = DirecciónSerializer(direccion)
+    return Response(serializer.data, status=status.HTTP_200_OK)

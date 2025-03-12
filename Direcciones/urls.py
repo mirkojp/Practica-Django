@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import obtener_provincias, localidades_por_provincia, localidades_censales_por_provincia
-from .views import calles_por_localidad_censal, crear_direccion
+from .views import calles_por_localidad_censal, crear_direccion, obtener_direccion
 
 urlpatterns = [
     path("obtener_provincias/", obtener_provincias, name="obtener_provincias"),
@@ -20,4 +20,5 @@ urlpatterns = [
         name="calles_por_localidad_censal",
     ),
     path("crear-direccion/", crear_direccion, name="crear_direccion"),
+    path("direcciones/", obtener_direccion, name="direcciones"),
 ]
