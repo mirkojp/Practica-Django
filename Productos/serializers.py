@@ -2,10 +2,24 @@ from rest_framework import serializers
 from .models import Funko, Descuento, FunkoDescuento, Categoría, Imagen
 
 
+# class ImagenSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Imagen
+#         fields = "__all__"  # Todos los campos de Imagen
+
+
 class ImagenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Imagen
-        fields = "__all__"  # Todos los campos de Imagen
+        fields = "__all__"
+        extra_kwargs = {
+            "clave": {"required": False}, 
+            "url": {"required": False},
+            "nombre": {"required": False},
+            "ancho": {"required": False},
+            "alto": {"required": False},
+            "formato": {"required": False},
+        }
 
 
 class CategoríaSerializer(serializers.ModelSerializer):

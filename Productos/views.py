@@ -1119,45 +1119,39 @@ def listar_reseñas_funko(request, id):
 @token_required_admin_without_user
 class ImagenListView(APIView):
     def post(self, request):
-        # Verificar que se envió una imagen en la request
-        image_file = request.FILES.get("imagen")
-
-        if not image_file:
+        if "imagen" not in request.FILES:
             return Response(
-                {"error": "No se ha proporcionado ninguna imagen."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "No se proporcionó ninguna imagen."},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
+        imagen = request.FILES["imagen"]
+
         try:
-            # Subir la imagen a Cloudinary
-            image_data = upload_image_to_cloudinary(image_file)
+            upload_response = cloudinary.uploader.upload(imagen)
+            image_data = {
+                "clave": upload_response["public_id"],
+                "url": upload_response["secure_url"],
+                "nombre": upload_response["original_filename"],
+                "ancho": upload_response["width"],
+                "alto": upload_response["height"],
+                "formato": upload_response["format"],
+            }
 
-            if "error" in image_data:
-                return Response(
-                    {"error": image_data["error"]},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-            with transaction.atomic():
-                # Crear la imagen en la base de datos
-                imagen = Imagen.objects.create(
-                    clave=image_data["clave"],
-                    url=image_data["url"],
-                    nombre=image_data["nombre"],
-                    ancho=image_data["ancho"],
-                    alto=image_data["alto"],
-                    formato=image_data["formato"],
-                )
+            imagen_obj = Imagen.objects.create(**image_data)
+            serializer = ImagenSerializer(imagen_obj)
 
             return Response(
-                {"mensaje": "Imagen subida exitosamente", "imagen": ImagenSerializer(imagen).data},
+                {"Mensaje": "Imagen subida con éxito", "Imagen": serializer.data},
                 status=status.HTTP_201_CREATED,
             )
 
         except Exception as e:
             return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": f"Error al subir la imagen: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
     def get(self, request, imagen_id=None):
         if imagen_id:
