@@ -18,73 +18,72 @@ from decorators.token_decorators import token_required_admin_without_user
 from .services import upload_image_to_cloudinary, delete_image_from_cloudinary
 import cloudinary
 
-# Create your views here.
-# @api_view(["POST", "GET"]) #Resuelve crear y listar funkos
-# def old_Funkos(request):
+@api_view(["POST", "GET"]) #Resuelve crear y listar funkos
+def old_Funkos(request):
 
-#     if request.method == 'POST':
-#         # Obtener el token del encabezado de la solicitud
-#         token = request.headers.get('Authorization')
+    if request.method == 'POST':
+        # Obtener el token del encabezado de la solicitud
+        token = request.headers.get('Authorization')
 
-#         if not token or not token.startswith('Token '):
-#             return Response({"error": "Token no provisto o incorrecto."}, status=status.HTTP_401_UNAUTHORIZED)
+        if not token or not token.startswith('Token '):
+            return Response({"error": "Token no provisto o incorrecto."}, status=status.HTTP_401_UNAUTHORIZED)
 
-#         # Extraer el token después de la palabra 'Token '
-#         token_key = token.split(' ')[1]
+        # Extraer el token después de la palabra 'Token '
+        token_key = token.split(' ')[1]
 
-#         try:
-#             # Buscar el token en la base de datos
-#             token = Token.objects.get(key=token_key)
-#             usuario = token.user  # Obtener el usuario asociado al token
+        try:
+            # Buscar el token en la base de datos
+            token = Token.objects.get(key=token_key)
+            usuario = token.user  # Obtener el usuario asociado al token
 
-#             # Verificar que el usuario es un admin
-#             if not usuario.is_staff:  # Sólo el usuario admin puede crear funkos
-#                 return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
+            # Verificar que el usuario es un admin
+            if not usuario.is_staff:  # Sólo el usuario admin puede crear funkos
+                return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
 
-#             # Verifica que la request tenga todos los datos necesarios
-#             serializer = FunkoSerializer(data=request.data)
-#             if serializer.is_valid():
+            # Verifica que la request tenga todos los datos necesarios
+            serializer = FunkoSerializer(data=request.data)
+            if serializer.is_valid():
 
-#                 try:
-#                     with transaction.atomic():
-#                         # Crear el funko utilizando el método save del serializer
-#                         serializer.save()
+                try:
+                    with transaction.atomic():
+                        # Crear el funko utilizando el método save del serializer
+                        serializer.save()
 
-#                     return Response(
-#                         {
-#                             "Mensaje": "Recurso creado exitosamente",
-#                             "Funko": serializer.data,
-#                         },
-#                         status=status.HTTP_201_CREATED,
-#                     )
-#                 except IntegrityError:
-#                     # Manejo de excepciones si hay un error de integridad
-#                     return Response({"error": "Ya existe un Funko con ese nombre."}, status=status.HTTP_400_BAD_REQUEST)
-#                 except Exception as e:
-#                     # Manejo de otras excepciones
-#                     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "Mensaje": "Recurso creado exitosamente",
+                            "Funko": serializer.data,
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                except IntegrityError:
+                    # Manejo de excepciones si hay un error de integridad
+                    return Response({"error": "Ya existe un Funko con ese nombre."}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as e:
+                    # Manejo de otras excepciones
+                    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#         except Token.DoesNotExist:
-#             return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Token.DoesNotExist:
+            return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
 
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-#     elif request.method == 'GET':
-#         # Obtener todos los registros del modelo Funko
-#         funkos = Funko.objects.all().values("idFunko", "nombre", "descripción", "is_backlight", "stock", "precio")
+    elif request.method == 'GET':
+        # Obtener todos los registros del modelo Funko
+        funkos = Funko.objects.all().values("idFunko", "nombre", "descripción", "is_backlight", "stock", "precio")
 
-#         return Response(
-#             {
-#                 funkos
-#             },
-#             status=status.HTTP_200_OK
-#         )
+        return Response(
+            {
+                funkos
+            },
+            status=status.HTTP_200_OK
+        )
 
 @api_view(["POST", "GET"])
-def funkos(request):
+def old_mirko_funkos(request):
     if request.method == "POST":
         # Obtener el token del encabezado de la solicitud
         token = request.headers.get("Authorization")
@@ -212,121 +211,187 @@ def funkos(request):
                 },
                 status=status.HTTP_200_OK
             )
-        
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# @api_view(["GET", "PUT", "DELETE"]) #Resuelve listar un funko, eliminarlo y modificarlo
-# def old_operaciones_funkos(request, id):
+@api_view(["POST", "GET"])
+def funkos(request):
+    if request.method == "POST":
+        token = request.headers.get("Authorization")
 
-#     try:
-#         # Intentar obtener el Funko por el id proporcionado
-#         funko = Funko.objects.get(idFunko=id)
-#         serializer = FunkoSerializer(funko)
+        if not token or not token.startswith("Token "):
+            return Response(
+                {"error": "Token no provisto o incorrecto."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-#     except Funko.DoesNotExist:
-#         # Si el Funko con el ID proporcionado no existe
-#         return Response(
-#             {"error": "Funko no encontrado con ese ID."},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-#     except ValueError:
-#         # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
-#         return Response(
-#             {"error": "ID no válido"},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
+        token_key = token.split(" ")[1]
 
-#     if request.method == 'GET': #Listar funko segun id
-#         return Response(
-#             {
-#                 "Funko" : serializer.data
-#             },
-#             status=status.HTTP_200_OK
-#         )
+        try:
+            token = Token.objects.get(key=token_key)
+            usuario = token.user
 
-#     # Obtener el token del encabezado de la solicitud
-#     token = request.headers.get('Authorization')
+            if not usuario.is_staff:
+                return Response(
+                    {"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED
+                )
 
-#     if not token or not token.startswith('Token '):
-#         return Response({"error": "Token no provisto o incorrecto."}, status=status.HTTP_401_UNAUTHORIZED)
+            serializer = FunkoSerializer(data=request.data)
+            if serializer.is_valid():
+                imagen_id = request.data.get("imagen")
+                imagen = None
+                if imagen_id:
+                    try:
+                        imagen = Imagen.objects.get(pk=imagen_id)
+                    except Imagen.DoesNotExist:
+                        return Response(
+                            {"error": "Imagen no encontrada."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                try:
+                    with transaction.atomic():
+                        funko = serializer.save()
+                        if imagen:
+                            funko.imagen = imagen
+                            funko.save()
 
-#     # Extraer el token después de la palabra 'Token '
-#     token_key = token.split(' ')[1]
+                    return Response(
+                        {
+                            "Mensaje": "Recurso creado exitosamente",
+                            "Funko": FunkoSerializer(funko).data,
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                except IntegrityError:
+                    return Response(
+                        {"error": "Ya existe un Funko con ese nombre."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                except Exception as e:
+                    return Response(
+                        {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Token.DoesNotExist:
+            return Response(
+                {"error": "Token inválido o no encontrado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-#     try:
-#         # Buscar el token en la base de datos
-#         token = Token.objects.get(key=token_key)
-#         usuario = token.user  # Obtener el usuario asociado al token
 
-#         # Verificar que el usuario es un admin
-#         if not usuario.is_staff:  # Sólo el usuario admin puede crear funkos
-#             return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
+@api_view(["GET", "PUT", "DELETE"]) #Resuelve listar un funko, eliminarlo y modificarlo
+def old_operaciones_funkos(request, id):
 
-#         if request.method == 'PUT': #Modifica el funko segun id
-#             # Verifica que la request tenga todos los datos necesarios
-#             serializer = FunkoSerializer(data=request.data)
-#             if serializer.is_valid():
-#                 try:
+    try:
+        # Intentar obtener el Funko por el id proporcionado
+        funko = Funko.objects.get(idFunko=id)
+        serializer = FunkoSerializer(funko)
 
-#                     # Validar que no exista otro Funko con el mismo nombre (excluyendo el actual)
-#                     if Funko.objects.filter(nombre=serializer.data["nombre"]).exclude(idFunko=funko.idFunko).exists():
-#                         return Response(
-#                             {"error": "Ya existe un Funko con este nombre."},
-#                             status=status.HTTP_400_BAD_REQUEST
-#                         )
+    except Funko.DoesNotExist:
+        # Si el Funko con el ID proporcionado no existe
+        return Response(
+            {"error": "Funko no encontrado con ese ID."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except ValueError:
+        # Si el valor del ID no es válido (por ejemplo, si es una cadena en lugar de un número)
+        return Response(
+            {"error": "ID no válido"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-#                     funko.nombre = serializer.data["nombre"]
-#                     funko.descripción = serializer.data["descripción"]
-#                     funko.is_backlight = serializer.data["is_backlight"]
-#                     funko.stock = serializer.data["stock"]
-#                     funko.precio = serializer.data["precio"]
+    if request.method == 'GET': #Listar funko segun id
+        return Response(
+            {
+                "Funko" : serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
 
-#                     return Response(
-#                         {
-#                             "Mensaje": "Recurso actualizado correctamente",
-#                             "Funko": serializer.data,
-#                         },
-#                         status=status.HTTP_200_OK,
-#                     )
-#                 except Exception as e:
-#                     # Manejo de otras excepciones
-#                     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # Obtener el token del encabezado de la solicitud
+    token = request.headers.get('Authorization')
 
-#             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         elif request.method == 'DELETE': #Borrar funko segun id
-#             # Borra el funko
-#             funko.delete()
+    if not token or not token.startswith('Token '):
+        return Response({"error": "Token no provisto o incorrecto."}, status=status.HTTP_401_UNAUTHORIZED)
 
-#             return Response(status=status.HTTP_200_OK)
+    # Extraer el token después de la palabra 'Token '
+    token_key = token.split(' ')[1]
 
-#     except Token.DoesNotExist:
-#         return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
-#     except Exception as e:
-#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    try:
+        # Buscar el token en la base de datos
+        token = Token.objects.get(key=token_key)
+        usuario = token.user  # Obtener el usuario asociado al token
+
+        # Verificar que el usuario es un admin
+        if not usuario.is_staff:  # Sólo el usuario admin puede crear funkos
+            return Response({"error": "No autorizado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.method == 'PUT': #Modifica el funko segun id
+            # Verifica que la request tenga todos los datos necesarios
+            serializer = FunkoSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+
+                    # Validar que no exista otro Funko con el mismo nombre (excluyendo el actual)
+                    if Funko.objects.filter(nombre=serializer.data["nombre"]).exclude(idFunko=funko.idFunko).exists():
+                        return Response(
+                            {"error": "Ya existe un Funko con este nombre."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    funko.nombre = serializer.data["nombre"]
+                    funko.descripción = serializer.data["descripción"]
+                    funko.is_backlight = serializer.data["is_backlight"]
+                    funko.stock = serializer.data["stock"]
+                    funko.precio = serializer.data["precio"]
+
+                    return Response(
+                        {
+                            "Mensaje": "Recurso actualizado correctamente",
+                            "Funko": serializer.data,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                except Exception as e:
+                    # Manejo de otras excepciones
+                    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif request.method == 'DELETE': #Borrar funko segun id
+            # Borra el funko
+            funko.delete()
+
+            return Response(status=status.HTTP_200_OK)
+
+    except Token.DoesNotExist:
+        return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET", "PUT", "DELETE"])
 def operaciones_funkos(request, id):
     try:
-        # Obtener el Funko por su ID
         funko = Funko.objects.get(idFunko=id)
     except Funko.DoesNotExist:
         return Response(
-            {"error": "Funko no encontrado con ese ID."},
-            status=status.HTTP_404_NOT_FOUND,
+            {"error": "Funko no encontrado."}, status=status.HTTP_404_NOT_FOUND
         )
     except ValueError:
         return Response({"error": "ID no válido"}, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == "GET":
-        # Devolver los datos del Funko
         serializer = FunkoSerializer(funko)
         return Response({"Funko": serializer.data}, status=status.HTTP_200_OK)
 
-    # Verificar el token de autenticación
+    # Verificar Token
     token = request.headers.get("Authorization")
     if not token or not token.startswith("Token "):
         return Response(
@@ -335,9 +400,7 @@ def operaciones_funkos(request, id):
         )
 
     token_key = token.split(" ")[1]
-
     try:
-        # Validar el token y obtener el usuario
         token = Token.objects.get(key=token_key)
         usuario = token.user
 
@@ -347,36 +410,26 @@ def operaciones_funkos(request, id):
             )
 
         if request.method == "PUT":
-            # Serializar el funko con los nuevos datos (actualización parcial)
             serializer = FunkoSerializer(funko, data=request.data, partial=True)
             if serializer.is_valid():
-                # Manejo de imagen (si hay una nueva en la solicitud)
-                nueva_imagen = request.FILES.get("imagen")
-                if nueva_imagen:
-                    # Eliminar la imagen anterior de Cloudinary si existía
-                    if funko.imagen:
-                        delete_image_from_cloudinary(funko.imagen.clave)
+                nueva_imagen_id = request.data.get("imagen_id")
 
-                    # Subir la nueva imagen a Cloudinary
-                    image_data = upload_image_to_cloudinary(nueva_imagen)
-                    if "error" in image_data:
+                if nueva_imagen_id:
+                    try:
+                        nueva_imagen = Imagen.objects.get(pk=nueva_imagen_id)
+
+                        # Eliminar la imagen anterior en Cloudinary si existía
+                        if funko.imagen:
+                            delete_image_from_cloudinary(funko.imagen.clave)
+                            funko.imagen.delete()
+
+                        funko.imagen = nueva_imagen  # Asignar nueva imagen
+                    except Imagen.DoesNotExist:
                         return Response(
-                            {"error": image_data["error"]},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            {"error": "Imagen no encontrada."},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
 
-                    # Crear y asignar la nueva imagen
-                    imagen = Imagen.objects.create(
-                        clave=image_data["clave"],
-                        url=image_data["url"],
-                        nombre=image_data["nombre"],
-                        ancho=image_data["ancho"],
-                        alto=image_data["alto"],
-                        formato=image_data["formato"],
-                    )
-                    serializer.validated_data["imagen"] = imagen
-
-                # Guardar los cambios en la base de datos
                 serializer.save()
                 return Response(
                     {
@@ -389,19 +442,14 @@ def operaciones_funkos(request, id):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         elif request.method == "DELETE":
-            # Eliminar la imagen en Cloudinary antes de borrar el Funko
-            if funko.imagen:
-                delete_image_from_cloudinary(funko.imagen.clave)
-
-            funko.delete()
+            funko.delete()  # Esto ahora borra el Funko y su imagen en BD y Cloudinary
             return Response(
                 {"Mensaje": "Funko eliminado correctamente"}, status=status.HTTP_200_OK
             )
 
     except Token.DoesNotExist:
         return Response(
-            {"error": "Token inválido o no encontrado."},
-            status=status.HTTP_401_UNAUTHORIZED,
+            {"error": "Token inválido."}, status=status.HTTP_401_UNAUTHORIZED
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1068,9 +1116,49 @@ def listar_reseñas_funko(request, id):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-
+@token_required_admin_without_user
 class ImagenListView(APIView):
+    def post(self, request):
+        # Verificar que se envió una imagen en la request
+        image_file = request.FILES.get("imagen")
+
+        if not image_file:
+            return Response(
+                {"error": "No se ha proporcionado ninguna imagen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Subir la imagen a Cloudinary
+            image_data = upload_image_to_cloudinary(image_file)
+
+            if "error" in image_data:
+                return Response(
+                    {"error": image_data["error"]},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            with transaction.atomic():
+                # Crear la imagen en la base de datos
+                imagen = Imagen.objects.create(
+                    clave=image_data["clave"],
+                    url=image_data["url"],
+                    nombre=image_data["nombre"],
+                    ancho=image_data["ancho"],
+                    alto=image_data["alto"],
+                    formato=image_data["formato"],
+                )
+
+            return Response(
+                {"mensaje": "Imagen subida exitosamente", "imagen": ImagenSerializer(imagen).data},
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     def get(self, request, imagen_id=None):
         if imagen_id:
             try:
@@ -1085,3 +1173,73 @@ class ImagenListView(APIView):
         imagenes = Imagen.objects.all()
         serializer = ImagenSerializer(imagenes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, imagen_id):
+        try:
+            imagen = Imagen.objects.get(pk=imagen_id)
+        except Imagen.DoesNotExist:
+            return Response(
+                {"error": "Imagen no encontrada"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        nueva_imagen = request.FILES.get("imagen")
+        if not nueva_imagen:
+            return Response(
+                {"error": "No se ha proporcionado ninguna imagen nueva."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with transaction.atomic():
+                # Eliminar la imagen anterior en Cloudinary
+                delete_image_from_cloudinary(imagen.clave)
+
+                # Subir la nueva imagen a Cloudinary
+                image_data = upload_image_to_cloudinary(nueva_imagen)
+                if "error" in image_data:
+                    return Response(
+                        {"error": image_data["error"]},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+                
+                # Actualizar los datos de la imagen en la base de datos
+                imagen.clave = image_data["clave"]
+                imagen.url = image_data["url"]
+                imagen.nombre = image_data["nombre"]
+                imagen.ancho = image_data["ancho"]
+                imagen.alto = image_data["alto"]
+                imagen.formato = image_data["formato"]
+                imagen.save()
+
+            return Response(
+                {"mensaje": "Imagen actualizada exitosamente", "imagen": ImagenSerializer(imagen).data},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, imagen_id):
+        try:
+            imagen = Imagen.objects.get(pk=imagen_id)
+        except Imagen.DoesNotExist:
+            return Response(
+                {"error": "Imagen no encontrada"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            with transaction.atomic():
+            # Eliminar la imagen de Cloudinary
+                delete_image_from_cloudinary(imagen.clave)
+
+            # Eliminar la imagen de la base de datos
+                imagen.delete()
+
+            return Response(
+                {"mensaje": "Imagen eliminada exitosamente"}, status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

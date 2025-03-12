@@ -18,7 +18,7 @@ class FunkoSerializer(serializers.ModelSerializer):
     imagen = serializers.PrimaryKeyRelatedField(
         queryset=Imagen.objects.all(), allow_null=True, required=False
     )  # Usamos solo la ID de la imagen
-
+    
     categoría = serializers.PrimaryKeyRelatedField(
         queryset=Categoría.objects.all(), many=True, required=False
     )  # Lista de IDs de categorías
@@ -35,7 +35,6 @@ class FunkoSerializer(serializers.ModelSerializer):
             "imagen",  # Ahora devuelve solo la ID de la imagen
             "categoría",  # Lista de IDs de categorías
         ]
-
 
 class DescuentoSerializer(serializers.ModelSerializer):
     class Meta:
