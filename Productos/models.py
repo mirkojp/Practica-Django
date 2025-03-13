@@ -30,10 +30,10 @@ class Descuento(models.Model):
     nombre = models.CharField(max_length=100, editable=False, null=False, blank=False)
     porcentaje = models.FloatField(null=False, blank=False, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
-    def save(self, *args, **kwargs):
+    #def save(self, *args, **kwargs):
         # Convertir el porcentaje a texto y actualizar el campo nombre
-        self.nombre = num2words(int(self.porcentaje), lang='es')  # Convertir a letras en español
-        super().save(*args, **kwargs)
+        #self.nombre = num2words(int(self.porcentaje), lang='es')  # Convertir a letras en español
+        #super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Descuento del {self.nombre} ({self.porcentaje}%)"

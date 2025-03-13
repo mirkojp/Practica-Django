@@ -514,13 +514,15 @@ def favoritos(request, id):
 @api_view(["POST", "GET"])  
 def descuentos(request):     #Resuelve crear y listar los descuentos
 
-    # Llama a userAuthorization para verificar el token y obtener el usuario
-    usuario, error_response = adminAuthorization(request)
-
-    if error_response: # Retorna el error si el token es inválido o no encontrado
-        return error_response
     
     if request.method == 'POST':
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+        
         #Verifica que la request tenga todos los datos necesarios
         serializer = DescuentoSerializer(data=request.data)
         if serializer.is_valid():
@@ -562,12 +564,6 @@ def descuentos(request):     #Resuelve crear y listar los descuentos
 
 @api_view(["GET", "PUT", "DELETE"])
 def operaciones_descuentos(request, id): #Resuelve listar un Descuento, eliminarlo y modificarlo
-
-    # Llama a userAuthorization para verificar el token y obtener el usuario
-    usuario, error_response = adminAuthorization(request)
-
-    if error_response: # Retorna el error si el token es inválido o no encontrado
-        return error_response
     
     if request.method == 'GET': 
         try:
@@ -588,6 +584,12 @@ def operaciones_descuentos(request, id): #Resuelve listar un Descuento, eliminar
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == "PUT": #Modifica el funko segun el id
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
 
         #Verifica que la request tenga todos los datos necesarios
         serializer = DescuentoSerializer(data=request.data)
@@ -627,6 +629,12 @@ def operaciones_descuentos(request, id): #Resuelve listar un Descuento, eliminar
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
     elif request.method == "DELETE":
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+
         try:
             # Intentar obtener el Descuento por el id 
             descuento = Descuento.objects.get(idDescuento=id)
@@ -850,10 +858,10 @@ def categorias(request):
     elif request.method == 'GET':
 
         # Llama a userAuthorization para verificar el token y obtener el usuario
-        usuario, error_response = userAuthorization(request)
+        #usuario, error_response = userAuthorization(request)
 
-        if error_response: # Retorna el error si el token es inválido o no encontrado
-            return error_response
+        #if error_response: # Retorna el error si el token es inválido o no encontrado
+            #return error_response
 
         try:
             # Serializar todos los registros del modelo Descuento
@@ -874,12 +882,6 @@ def categorias(request):
 @api_view(["DELETE", "PUT", "GET"])
 def op_categorias(request, id):
 
-    # Llama a userAuthorization para verificar el token y obtener el usuario
-    usuario, error_response = adminAuthorization(request)
-
-    if error_response: # Retorna el error si el token es inválido o no encontrado
-        return error_response
-
     if request.method == 'GET': 
         try:
             # Intentar obtener la Categoria por el id
@@ -899,6 +901,13 @@ def op_categorias(request, id):
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == "PUT":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+        
         # Verifica que la request tenga todos los datos necesarios
         serializer = CategoríaSerializer(data=request.data)
 
@@ -934,6 +943,12 @@ def op_categorias(request, id):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == "DELETE":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+                return error_response
         try:
             # Intentar obtener la Categoria por el id
             categoria = Categoría.objects.get(idCategoria=id)
