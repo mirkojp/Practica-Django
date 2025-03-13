@@ -216,7 +216,6 @@ def old_mirko_funkos(request):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(["POST", "GET"])
 def funkos(request):
     if request.method == "POST":
@@ -280,6 +279,26 @@ def funkos(request):
                 {"error": "Token inválido o no encontrado."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    if request.method == "GET":
+        try:
+            # Obtener todos los registros del modelo Funko, incluyendo las imágenes
+            funkos = (
+                Funko.objects.all()
+            )  # Se obtienen todos los funkos con la relación de imagen
+            funko_serializer = FunkoSerializer(funkos, many=True)
+
+            return Response(
+                {
+                    "funkos": funko_serializer.data  # Retornar todos los funkos con sus imágenes
+                },
+                status=status.HTTP_200_OK,
+            )
+
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
