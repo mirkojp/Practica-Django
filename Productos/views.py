@@ -1136,8 +1136,29 @@ def listar_reseñas_funko(request, id):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@method_decorator(token_required_admin_without_user, name="dispatch")
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.db import transaction
+
 class ImagenListView(APIView):
+    def get(self, request, imagen_id=None):
+        if imagen_id:
+            try:
+                imagen = Imagen.objects.get(pk=imagen_id)
+                serializer = ImagenSerializer(imagen)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Imagen.DoesNotExist:
+                return Response(
+                    {"error": "Imagen no encontrada"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+        imagenes = Imagen.objects.all()
+        serializer = ImagenSerializer(imagenes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @method_decorator(token_required_admin_without_user)
     def post(self, request):
         if "imagen" not in request.FILES:
             return Response(
@@ -1172,22 +1193,7 @@ class ImagenListView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
-    def get(self, request, imagen_id=None):
-        if imagen_id:
-            try:
-                imagen = Imagen.objects.get(pk=imagen_id)
-                serializer = ImagenSerializer(imagen)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except Imagen.DoesNotExist:
-                return Response(
-                    {"error": "Imagen no encontrada"}, status=status.HTTP_404_NOT_FOUND
-                )
-
-        imagenes = Imagen.objects.all()
-        serializer = ImagenSerializer(imagenes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+    @method_decorator(token_required_admin_without_user)
     def put(self, request, imagen_id):
         try:
             imagen = Imagen.objects.get(pk=imagen_id)
@@ -1205,10 +1211,7 @@ class ImagenListView(APIView):
 
         try:
             with transaction.atomic():
-                # Eliminar la imagen anterior en Cloudinary
                 delete_image_from_cloudinary(imagen.clave)
-
-                # Subir la nueva imagen a Cloudinary
                 image_data = upload_image_to_cloudinary(nueva_imagen)
                 if "error" in image_data:
                     return Response(
@@ -1216,7 +1219,6 @@ class ImagenListView(APIView):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
                 
-                # Actualizar los datos de la imagen en la base de datos
                 imagen.clave = image_data["clave"]
                 imagen.url = image_data["url"]
                 imagen.nombre = image_data["nombre"]
@@ -1234,6 +1236,7 @@ class ImagenListView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @method_decorator(token_required_admin_without_user)
     def delete(self, request, imagen_id):
         try:
             imagen = Imagen.objects.get(pk=imagen_id)
@@ -1244,10 +1247,7 @@ class ImagenListView(APIView):
 
         try:
             with transaction.atomic():
-            # Eliminar la imagen de Cloudinary
                 delete_image_from_cloudinary(imagen.clave)
-
-            # Eliminar la imagen de la base de datos
                 imagen.delete()
 
             return Response(
