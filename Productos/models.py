@@ -27,7 +27,7 @@ class Categoría(models.Model):
 
 class Descuento(models.Model):
     idDescuento = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=100, editable=False, null=False, blank=False)
+    nombre = models.CharField(max_length=100, null=False, blank=False, unique=True)
     porcentaje = models.FloatField(null=False, blank=False, validators=[MinValueValidator(0), MaxValueValidator(100)])
 
     #def save(self, *args, **kwargs):
