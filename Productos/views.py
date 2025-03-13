@@ -1136,11 +1136,7 @@ def listar_reseñas_funko(request, id):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-from django.utils.decorators import method_decorator
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.db import transaction
+
 
 class ImagenListView(APIView):
     def get(self, request, imagen_id=None):
@@ -1163,7 +1159,7 @@ class ImagenListView(APIView):
         if "imagen" not in request.FILES:
             return Response(
                 {"error": "No se proporcionó ninguna imagen."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         imagen = request.FILES["imagen"]
@@ -1218,7 +1214,7 @@ class ImagenListView(APIView):
                         {"error": image_data["error"]},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     )
-                
+
                 imagen.clave = image_data["clave"]
                 imagen.url = image_data["url"]
                 imagen.nombre = image_data["nombre"]
@@ -1228,7 +1224,10 @@ class ImagenListView(APIView):
                 imagen.save()
 
             return Response(
-                {"mensaje": "Imagen actualizada exitosamente", "imagen": ImagenSerializer(imagen).data},
+                {
+                    "mensaje": "Imagen actualizada exitosamente",
+                    "imagen": ImagenSerializer(imagen).data,
+                },
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
