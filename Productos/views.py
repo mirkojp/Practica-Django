@@ -315,11 +315,11 @@ def funkos(request):
                 # Obtener el objeto Funko correspondiente
                 funko_obj = funkos.get(idFunko=funko["idFunko"])
 
-                # Reemplazar la lista de categorías por una lista de diccionarios con ID y nombre
+                # Si el Funko tiene categorías, las agregamos como lista de diccionarios con ID y nombre
+                categorias = funko_obj.categoría.all()
                 funko["categoría"] = [
-                    {"idCategoría": cat.idCategoría, "nombre": cat.nombre}
-                    for cat in funko_obj.categoría.all()
-                ]
+                    {"idCategoría": cat.idCategoría, "nombre": cat.nombre} for cat in categorias
+                ] if categorias.exists() else []
 
                 # Verificar si el Funko tiene una imagen
                 if funko_obj.imagen:
@@ -456,11 +456,11 @@ def operaciones_funkos(request, id):
         serializer = FunkoSerializer(funko)
         funko_data = serializer.data
 
-        # Agregar nombres de las categorías
+        # Agregar nombres de las categorías si existen, de lo contrario, devolver una lista vacía
+        categorias = funko.categoría.all()
         funko_data["categoría"] = [
-            {"idCategoría": cat.idCategoría, "nombre": cat.nombre}
-            for cat in funko.categoría.all()
-        ]
+            {"idCategoría": cat.idCategoría, "nombre": cat.nombre} for cat in categorias
+        ] if categorias.exists() else []
 
         # Verificar si el Funko tiene una imagen
         if funko.imagen:
