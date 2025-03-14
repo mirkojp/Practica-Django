@@ -1111,12 +1111,15 @@ def gestionar_funkos_categoria(request, id):
             return Response({"error": f"Algunos Funkos no existen: {list(ids_no_encontrados)}"}, status=status.HTTP_404_NOT_FOUND)
 
         if request.method == "POST":
-            # Agregar Funkos a la categoría
-            categoria.funkos.add(*funkos)
+            # Agregar la categoría a cada Funko
+            for funko in funkos:
+                funko.categoría.add(categoria)  
             mensaje = "Funkos agregados correctamente a la categoría."
+
         elif request.method == "DELETE":
-            # Eliminar Funkos de la categoría
-            categoria.funkos.remove(*funkos)
+            # Eliminar la categoría de cada Funko
+            for funko in funkos:
+                funko.categoría.remove(categoria)  
             mensaje = "Funkos eliminados correctamente de la categoría."
 
         return Response(
