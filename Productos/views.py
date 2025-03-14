@@ -284,18 +284,49 @@ def funkos(request):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+#    if request.method == "GET":
+#        try:
+#            # Obtener todos los registros del modelo Funko, incluyendo las imágenes
+#            funkos = (
+#                Funko.objects.all()
+#            )  # Se obtienen todos los funkos con la relación de imagen
+#            funko_serializer = FunkoSerializer(funkos, many=True)
+#
+#            return Response(
+#                {
+#                    "funkos": funko_serializer.data  # Retornar todos los funkos con sus imágenes
+#                },
+#                status=status.HTTP_200_OK,
+#            )
+#
+#        except Exception as e:
+#            return Response(
+#                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#            )
     if request.method == "GET":
         try:
             # Obtener todos los registros del modelo Funko, incluyendo las imágenes
-            funkos = (
-                Funko.objects.all()
-            )  # Se obtienen todos los funkos con la relación de imagen
+            funkos = Funko.objects.all()
             funko_serializer = FunkoSerializer(funkos, many=True)
 
+            # Modificar los datos antes de enviarlos
+            funko_data = funko_serializer.data
+            for funko in funko_data:
+                # Obtener el objeto Funko correspondiente
+                funko_obj = funkos.get(idFunko=funko["idFunko"])
+
+                # Reemplazar la lista de categorías por una lista de diccionarios con ID y nombre
+                funko["categoría"] = [
+                    {"idCategoría": cat.idCategoría, "nombre": cat.nombre}
+                    for cat in funko_obj.categoría.all()
+                ]
+
+                # Agregar la url de la imagen si existe
+                if funko_obj.imagen:
+                    funko["imagen"]["url"] = funko_obj.imagen.url
+
             return Response(
-                {
-                    "funkos": funko_serializer.data  # Retornar todos los funkos con sus imágenes
-                },
+                {"funkos": funko_data},  # Retornar los funkos con categorías y clave de imagen
                 status=status.HTTP_200_OK,
             )
 
@@ -407,9 +438,25 @@ def operaciones_funkos(request, id):
     except ValueError:
         return Response({"error": "ID no válido"}, status=status.HTTP_400_BAD_REQUEST)
 
+#    if request.method == "GET":
+#        serializer = FunkoSerializer(funko)
+#        return Response({"Funko": serializer.data}, status=status.HTTP_200_OK)
+
     if request.method == "GET":
         serializer = FunkoSerializer(funko)
-        return Response({"Funko": serializer.data}, status=status.HTTP_200_OK)
+        funko_data = serializer.data
+
+        # Agregar nombres de las categorías
+        funko_data["categoría"] = [
+            {"idCategoría": cat.idCategoría, "nombre": cat.nombre}
+            for cat in funko.categoría.all()
+        ]
+
+        # Agregar la clave de la imagen si existe
+        if funko.imagen:
+            funko_data["imagen"]["url"] = funko.imagen.url
+
+        return Response({"Funko": funko_data}, status=status.HTTP_200_OK)
 
     # Verificar Token
     token = request.headers.get("Authorization")
@@ -651,13 +698,14 @@ def operaciones_descuentos(request, id): #Resuelve listar un Descuento, eliminar
 @api_view(["POST", "GET"])
 def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
 
-    # Llama a userAuthorization para verificar el token y obtener el usuario
-    usuario, error_response = adminAuthorization(request)
-
-    if error_response: # Retorna el error si el token es inválido o no encontrado
-        return error_response
     
     if request.method == "POST":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
 
         # Verifica que la solicitud incluya los campos 'funko' y 'descuento' con sus respectivos IDs
         funko_id = request.data.get('funko')
@@ -731,13 +779,15 @@ def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
 @api_view(["DELETE", "PUT", "GET"])
 def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, eliminarlo y modificarlo
 
-    # Llama a userAuthorization para verificar el token y obtener el usuario
-    usuario, error_response = adminAuthorization(request)
-
-    if error_response: # Retorna el error si el token es inválido o no encontrado
-        return error_response
 
     if request.method == "DELETE":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+
         try:
             # Intentar obtener el FunkoDescuento por el id 
             funkoDescuento = FunkoDescuento.objects.get(idFunkoDescuento=id)
@@ -752,6 +802,13 @@ def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, elimi
             return Response({"error": "ID no válido"},status=status.HTTP_400_BAD_REQUEST)
         
     elif request.method == "PUT":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+
         # Intenta obtener el FunkoDescuento por su ID
         funko_descuento = get_object_or_404(FunkoDescuento, idFunkoDescuento=id)
 
