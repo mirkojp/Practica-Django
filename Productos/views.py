@@ -438,9 +438,25 @@ def operaciones_funkos(request, id):
     except ValueError:
         return Response({"error": "ID no válido"}, status=status.HTTP_400_BAD_REQUEST)
 
+#    if request.method == "GET":
+#        serializer = FunkoSerializer(funko)
+#        return Response({"Funko": serializer.data}, status=status.HTTP_200_OK)
+
     if request.method == "GET":
         serializer = FunkoSerializer(funko)
-        return Response({"Funko": serializer.data}, status=status.HTTP_200_OK)
+        funko_data = serializer.data
+
+        # Agregar nombres de las categorías
+        funko_data["categoría"] = [
+            {"idCategoría": cat.idCategoría, "nombre": cat.nombre}
+            for cat in funko.categoría.all()
+        ]
+
+        # Agregar la clave de la imagen si existe
+        if funko.imagen:
+            funko_data["imagen"]["clave"] = funko.imagen.clave
+
+        return Response({"Funko": funko_data}, status=status.HTTP_200_OK)
 
     # Verificar Token
     token = request.headers.get("Authorization")
