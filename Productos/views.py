@@ -321,9 +321,9 @@ def funkos(request):
                     for cat in funko_obj.categoría.all()
                 ]
 
-                # Agregar la clave de la imagen si existe
+                # Agregar la url de la imagen si existe
                 if funko_obj.imagen:
-                    funko["imagen"]["clave"] = funko_obj.imagen.clave
+                    funko["imagen"]["url"] = funko_obj.imagen.url
 
             return Response(
                 {"funkos": funko_data},  # Retornar los funkos con categorías y clave de imagen
@@ -454,7 +454,7 @@ def operaciones_funkos(request, id):
 
         # Agregar la clave de la imagen si existe
         if funko.imagen:
-            funko_data["imagen"]["clave"] = funko.imagen.clave
+            funko_data["imagen"]["url"] = funko.imagen.url
 
         return Response({"Funko": funko_data}, status=status.HTTP_200_OK)
 
