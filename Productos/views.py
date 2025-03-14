@@ -321,9 +321,19 @@ def funkos(request):
                     for cat in funko_obj.categoría.all()
                 ]
 
-                # Agregar la url de la imagen si existe
+                # Verificar si el Funko tiene una imagen
                 if funko_obj.imagen:
-                    funko["imagen"]["url"] = funko_obj.imagen.url
+                    if isinstance(funko["imagen"], int):  
+                        # Si 'imagen' es solo un ID, convertirlo en un diccionario
+                        funko["imagen"] = {
+                            "idImagen": funko["imagen"],
+                            "clave": funko_obj.imagen.clave,
+                            "url": funko_obj.imagen.url
+                        }
+                    else:
+                        # Si ya es un diccionario, agregar los valores
+                        funko["imagen"]["clave"] = funko_obj.imagen.clave
+                        funko["imagen"]["url"] = funko_obj.imagen.url
 
             return Response(
                 {"funkos": funko_data},  # Retornar los funkos con categorías y clave de imagen
