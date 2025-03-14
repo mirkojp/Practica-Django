@@ -459,7 +459,7 @@ def operaciones_funkos(request, id):
         # Agregar nombres de las categorías si existen, de lo contrario, devolver una lista vacía
         categorias = funko.categoría.all()
         funko_data["categoría"] = [
-            {"idCategoría": cat.idCategoría, "nombre": cat.nombre} for cat in categorias
+            {"idCategoria": cat.idCategoria, "nombre": cat.nombre} for cat in categorias
         ] if categorias.exists() else []
 
         # Verificar si el Funko tiene una imagen
