@@ -318,7 +318,7 @@ def funkos(request):
                 # Si el Funko tiene categorías, las agregamos como lista de diccionarios con ID y nombre
                 categorias = funko_obj.categoría.all()
                 funko["categoría"] = [
-                    {"idCategoría": cat.idCategoría, "nombre": cat.nombre} for cat in categorias
+                    {"idCategoria": cat.idCategoria, "nombre": cat.nombre} for cat in categorias
                 ] if categorias.exists() else []
 
                 # Verificar si el Funko tiene una imagen
