@@ -671,11 +671,41 @@ def listar_favoritos(request):
 
     # Obtener los Funkos favoritos del usuario
     favoritos = usuario.favoritos.all()
-    
     # Serializar los datos
-    serializer = FunkoSerializer(favoritos, many=True)
+    funko_serializer = FunkoSerializer(favoritos, many=True)
+
+    # Modificar los datos antes de enviarlos
+    funko_data = funko_serializer.data
+    for funko in funko_data:
+        # Obtener el objeto Funko correspondiente
+        funko_obj = favoritos.get(idFunko=funko["idFunko"])
+
+        # Si el Funko tiene categorías, las agregamos como lista de diccionarios con ID y nombre
+        categorias = funko_obj.categoría.all()
+        funko["categoría"] = [
+            {"idCategoria": cat.idCategoria, "nombre": cat.nombre} for cat in categorias
+        ] if categorias.exists() else []
+
+        # Verificar si el Funko tiene una imagen
+        if funko_obj.imagen:
+            if isinstance(funko["imagen"], int):  
+                # Si 'imagen' es solo un ID, convertirlo en un diccionario
+                funko["imagen"] = {
+                    "idImagen": funko["imagen"],
+                    "clave": funko_obj.imagen.clave,
+                    "url": funko_obj.imagen.url
+                }
+            else:
+                # Si ya es un diccionario, agregar los valores
+                funko["imagen"]["clave"] = funko_obj.imagen.clave
+                funko["imagen"]["url"] = funko_obj.imagen.url
+
+    return Response(
+        {"funkos": funko_data},  # Retornar los funkos con categorías y clave de imagen
+        status=status.HTTP_200_OK,
+    )
     
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    #return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
 def listar_carrito(request, id):
