@@ -63,43 +63,66 @@ def login(request):
 @api_view(["POST"])  #Resuelve /usuarios
 def register(request):
 
-    #Verifica que la request tenga todos los datos necesarios
-    serializer = UsuarioSerializer(data=request.data)
-    if serializer.is_valid():
+    if request.method == "POST":
+        #Verifica que la request tenga todos los datos necesarios
+        serializer = UsuarioSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+
+                with transaction.atomic():
+                    # Crear el usuario utilizando el método save del serializer
+                    serializer.save()
+
+                    # Asignar la contraseña
+                    usuario = Usuario.objects.get(nombre=serializer.data["nombre"])
+                    usuario.set_password(serializer.validated_data["password"])
+                    usuario.save()  # Guardar el usuario con la contraseña encriptada
+
+
+                    # Crear el token de autenticación
+                    token = Token.objects.create(user=usuario)
+
+                    # Crear el carrito asociado al usuario recién creado
+                    carrito = Carrito.objects.create(usuario=usuario)
+
+                return Response(
+                    {
+                        "Mensaje": "Recurso creado exitosamente",
+                        "Token": token.key,
+                        "Usuario": serializer.data,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            except IntegrityError:
+                # Manejo de excepciones si hay un error de integridad
+                return Response({"error": "Ya existe un usuario con ese email."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                # Manejo de otras excepciones
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    elif request.method == "GET":
+
+        # Llama a userAuthorization para verificar el token y obtener el usuario
+        usuario, error_response = adminAuthorization(request)
+
+        if error_response: # Retorna el error si el token es inválido o no encontrado
+            return error_response
+        
         try:
-
-            with transaction.atomic():
-                # Crear el usuario utilizando el método save del serializer
-                serializer.save()
-
-                # Asignar la contraseña
-                usuario = Usuario.objects.get(nombre=serializer.data["nombre"])
-                usuario.set_password(serializer.validated_data["password"])
-                usuario.save()  # Guardar el usuario con la contraseña encriptada
-
-
-                # Crear el token de autenticación
-                token = Token.objects.create(user=usuario)
-
-                # Crear el carrito asociado al usuario recién creado
-                carrito = Carrito.objects.create(usuario=usuario)
+            # Obtener todos los usuarios
+            usuarios = Usuario.objects.all()
+            usuarios_serializer = UsuarioSerializer(usuarios, many=True)
 
             return Response(
-                {
-                    "Mensaje": "Recurso creado exitosamente",
-                    "Token": token.key,
-                    "Usuario": serializer.data,
-                },
-                status=status.HTTP_201_CREATED,
+                {"usuarios": usuarios_serializer.data}, status=status.HTTP_200_OK
             )
-        except IntegrityError:
-            # Manejo de excepciones si hay un error de integridad
-            return Response({"error": "Ya existe un usuario con ese email."}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
 
 
 # Configura tu CLIENT_ID aquí (el ID de cliente de tu aplicación de Google)
