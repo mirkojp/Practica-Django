@@ -60,7 +60,7 @@ def login(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-@api_view(["POST"])  #Resuelve /usuarios
+@api_view(["POST", "GET"])  #Resuelve /usuarios
 def register(request):
 
     if request.method == "POST":
@@ -496,20 +496,22 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
         try:
             # Buscar el token en la base de datos
             token = Token.objects.get(key=token_key)
-            usuario = token.user  # Obtener el usuario asociado al token
-            serializer = UsuarioSerializer(instance=usuario)
+            usuario_autenticado = token.user  # Usuario autenticado según el token
 
-            # Verificar que el usuario tiene acceso solo a sus propios datos
-            if usuario.idUsuario != id and not usuario.is_staff:  # Sólo el usuario o un administrador pueden ver los datos
+            # Buscar el usuario por el ID pasado en la URL
+            try:
+                usuario_consultado = Usuario.objects.get(idUsuario=id)
+            except Usuario.DoesNotExist:
+                return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Verificar que el usuario autenticado tiene permisos para ver estos datos
+            if usuario_autenticado.idUsuario != usuario_consultado.idUsuario and not usuario_autenticado.is_staff:
                 return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
 
-            # Si todo está correcto, devuelve los datos del usuario
-            return Response(
-                {
-                    "Usuario": serializer.data,
-                },
-                status=status.HTTP_200_OK,
-            )
+            # Si tiene permiso, serializar y retornar los datos del usuario consultado
+            serializer = UsuarioSerializer(instance=usuario_consultado)
+
+            return Response({"Usuario": serializer.data}, status=status.HTTP_200_OK)
 
         except Token.DoesNotExist:
             return Response({"error": "Token inválido o no encontrado."}, status=status.HTTP_401_UNAUTHORIZED)
