@@ -9,4 +9,4 @@ class UsuarioSerializer(serializers.ModelSerializer):
 class ReseñaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reseña
-        fields = ["idReseña", "contenido", "esetrellas", "fecha"]
+        fields = ["idReseña", "contenido", "estrellas", "fecha"]
