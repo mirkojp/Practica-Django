@@ -610,9 +610,14 @@ def reseñas(request):
         return error_response  # Retorna error si la autenticación falla
 
     if request.method == "POST":
+        # Verifica si el usuario está autenticado
+        usuario, error_response = userAuthorization(request)
+        if error_response:
+            return error_response  # Retorna error si la autenticación falla
+
         # Obtener datos del cuerpo de la petición
         data = request.data.copy()  # Copiamos los datos para evitar modificar request.data
-        data["usuario"] = usuario.idUsuario  # Asigna el usuario autenticado a la reseña
+        data["usuario"] = usuario.idUsuario  # Asigna el ID del usuario autenticado a la reseña
 
         # Validar que el contenido no esté vacío
         contenido = data.get("contenido", "").strip()
@@ -635,11 +640,11 @@ def reseñas(request):
         # Serializar y guardar la reseña
         serializer = ReseñaSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(usuario=usuario)  # Pasamos el objeto usuario al guardar
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
     elif request.method == "GET":
         # Listar todas las reseñas
         reseñas = Reseña.objects.all().order_by("-fecha")  # Ordenadas por fecha más reciente
