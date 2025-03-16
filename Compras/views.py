@@ -293,7 +293,7 @@ def compras(request, usuario):
 
 @api_view(["PATCH", "GET"])
 @token_required
-def operaciones_compras(request, usuario, id):
+def operaciones_compras(request, id, usuario):
 
     if request.method == "GET":
         try:
