@@ -229,7 +229,7 @@ def compras(request, usuario):
                         item.funko.save()
                         item.funko.refresh_from_db()  # Asegurar que el cambio se refleja en la BD
                         print(f"Nuevo stock de {item.funko.nombre}: {item.funko.stock}")
-                        
+
                     else:
                         return Response(
                             {"error": f"Stock insuficiente para el Funko {item.funko.nombre}."},
@@ -293,7 +293,7 @@ def compras(request, usuario):
 
 @api_view(["PATCH", "GET"])
 @token_required
-def operaciones_compras(request, id, usuario):
+def operaciones_compras(request, usuario, id):
 
     if request.method == "GET":
         try:
