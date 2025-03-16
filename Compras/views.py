@@ -244,7 +244,7 @@ def compras(request, usuario):
             # Serializar y devolver la compra creada
             serializer = CompraSerializer(compra)
             return Response(
-                {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data},
+                {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data, "idUsuario": usuario.idUsuario},
                 status=status.HTTP_201_CREATED,
             )
 

@@ -13,7 +13,7 @@ class CompraItemSerializer(serializers.ModelSerializer):
         depth = 1  # Esto te permitirá ver los detalles del funko
 
 class CompraSerializer(serializers.ModelSerializer):
-    items = CompraItemSerializer(many=True, read_only=True, source='items')
+    items = CompraItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Compra
