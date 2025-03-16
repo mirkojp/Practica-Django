@@ -227,6 +227,9 @@ def compras(request, usuario):
                         # Restar el stock del Funko
                         item.funko.stock -= item.cantidad
                         item.funko.save()
+                        item.funko.refresh_from_db()  # Asegurar que el cambio se refleja en la BD
+                        print(f"Nuevo stock de {item.funko.nombre}: {item.funko.stock}")
+                        
                     else:
                         return Response(
                             {"error": f"Stock insuficiente para el Funko {item.funko.nombre}."},
