@@ -347,10 +347,10 @@ def operaciones_compras(request, usuario, id):
                 )
 
             # Cambios permitidos de estado
-            if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADA":
-                compra.estado = "ENVIADA"
-            elif compra.estado == "ENVIADA" and nuevo_estado == "ENTREGADA":
-                compra.estado = "ENTREGADA"
+            if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADO":
+                compra.estado = "ENVIADO"
+            elif compra.estado == "ENVIADO" and nuevo_estado == "ENTREGADO":
+                compra.estado = "ENTREGADO"
             else:
                 return Response(
                     {
