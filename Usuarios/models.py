@@ -70,11 +70,11 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 class Reseña(models.Model):
     idReseña = models.AutoField(primary_key=True)
     contenido = models.TextField()
-    esetrellas = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    estrellas = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     fecha = models.DateTimeField(auto_now_add=True)
 
     #Relaciones
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, null=False, blank=False, on_delete=models.CASCADE)
     funko = models.ForeignKey(Funko,null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
