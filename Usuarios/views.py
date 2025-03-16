@@ -621,7 +621,7 @@ def reseñas(request):
 
         # Validar que el número de estrellas esté dentro del rango permitido (1-5)
         try:
-            estrellas = int(data.get("esetrellas"))
+            estrellas = int(data.get("estrellas"))
             if estrellas not in range(1, 6):
                 return Response({"error": "El número de estrellas debe estar entre 1 y 5."}, status=status.HTTP_400_BAD_REQUEST)
         except (TypeError, ValueError):
