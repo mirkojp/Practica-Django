@@ -607,27 +607,37 @@ def reseñas(request):
     # Verifica si el usuario está autenticado
     usuario, error_response = userAuthorization(request)
     if error_response:
-        return error_response
+        return error_response  # Retorna error si la autenticación falla
 
     if request.method == "POST":
         # Obtener datos del cuerpo de la petición
-        data = request.data.copy()  # Copiamos los datos para modificarlos si es necesario
+        data = request.data.copy()  # Copiamos los datos para evitar modificar request.data
         data["usuario"] = usuario.idUsuario  # Asigna el usuario autenticado a la reseña
 
-        # Verifica si el funko existe antes de crear la reseña
+        # Validar que el contenido no esté vacío
+        contenido = data.get("contenido", "").strip()
+        if not contenido:
+            return Response({"error": "El contenido de la reseña no puede estar vacío."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validar que el número de estrellas esté dentro del rango permitido (1-5)
+        try:
+            estrellas = int(data.get("esetrellas"))
+            if estrellas not in range(1, 6):
+                return Response({"error": "El número de estrellas debe estar entre 1 y 5."}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({"error": "El número de estrellas debe ser un entero válido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verifica si el Funko existe antes de crear la reseña
         funko_id = data.get("funko")
-        if funko_id:
-            try:
-                Funko.objects.get(idFunko=funko_id)
-            except Funko.DoesNotExist:
-                return Response({"error": "El Funko especificado no existe."}, status=status.HTTP_404_NOT_FOUND)
+        if funko_id and not Funko.objects.filter(idFunko=funko_id).exists():
+            return Response({"error": "El Funko especificado no existe."}, status=status.HTTP_404_NOT_FOUND)
 
         # Serializar y guardar la reseña
         serializer = ReseñaSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == "GET":
