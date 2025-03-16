@@ -221,6 +221,18 @@ def compras(request, usuario):
             # Crear las líneas de compra (CompraItem) a partir de los items del carrito
             with transaction.atomic():
                 for item in carrito_items:
+
+                    # Verificar si hay suficiente stock
+                    if item.funko.stock >= item.cantidad:
+                        # Restar el stock del Funko
+                        item.funko.stock -= item.cantidad
+                        item.funko.save()
+                    else:
+                        return Response(
+                            {"error": f"Stock insuficiente para el Funko {item.funko.nombre}."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     # Crear el CompraItem basado en cada CarritoItem
                     compra_item = CompraItem.objects.create(
                         compra=compra,
