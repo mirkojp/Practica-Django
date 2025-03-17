@@ -13,8 +13,11 @@ from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
 from Compras.models import Compra
 from decorators.token_decorators import token_required_without_user
-
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .services import obtener_info_georef,obtener_info_google_maps
+import json
+from models import Provincia,Municipio,Coordenada,Direccion,Departamento
 @api_view(["GET"])
 @token_required_without_user
 def obtener_provincias(request):
@@ -302,15 +305,78 @@ def listar_direccion_por_compra(request, idCompra):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-@api_view(["GET"])
-@token_required_without_user
-def obtener_direccion(request, id):
-    try:
-        # Busca la dirección por ID
-        direccion = Dirección.objects.get(idDireccion=id)
-    except Dirección.DoesNotExist:
-        return Response({"error": "Dirección no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Serializa la dirección y la retorna
-    serializer = DirecciónSerializer(direccion)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+def obtener_info_ubicacion(request):
+    """Recibe latitud/longitud, consulta APIs de Georef y Google, y devuelve los datos al frontend."""
+    if request.method == "POST":
+        data = json.loads(request.body)
+        lat = data.get("lat")
+        lon = data.get("lon")
+
+        if not lat or not lon:
+            return JsonResponse({"error": "Faltan coordenadas"}, status=400)
+
+        # Obtener datos de las APIs
+        data_georef = obtener_info_georef(lat, lon)
+        data_google = obtener_info_google_maps(lat, lon)
+
+        # Guardar Georef en la sesión para validar luego
+        request.session["georef_data"] = data_georef
+
+        return JsonResponse({"georef": data_georef, "google": data_google})
+
+
+def guardar_direccion(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        # Extraer datos de Georef Argentina
+        id_provincia = data["georef"]["provincia"]["id"]
+        nombre_provincia = data["georef"]["provincia"]["nombre"]
+        id_departamento = data["georef"]["departamento"]["id"]
+        nombre_departamento = data["georef"]["departamento"]["nombre"]
+        id_municipio = data["georef"]["municipio"]["id"]
+        nombre_municipio = data["georef"]["municipio"]["nombre"]
+
+        # Extraer datos de Google Maps
+        calle = data["google"]["calle"]
+        numero = data["google"]["numero"]
+        codigo_postal = data["google"]["codigo_postal"]
+        contacto = data.get("contacto")  # Puede ser opcional
+        email = data.get("email")  # Puede ser opcional
+
+        lat = data["lat"]
+        lon = data["lon"]
+
+        # Guardar en la base de datos
+        with transaction.atomic():
+            provincia, _ = Provincia.objects.get_or_create(
+                idProvincia=id_provincia, defaults={"nombre": nombre_provincia}
+            )
+            departamento, _ = Departamento.objects.get_or_create(
+                idDepartamento=id_departamento,
+                defaults={"nombre": nombre_departamento, "provincia": provincia},
+            )
+            municipio, _ = Municipio.objects.get_or_create(
+                idMunicipio=id_municipio,
+                defaults={"nombre": nombre_municipio, "departamento": departamento},
+            )
+
+            coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
+
+            direccion = Direccion.objects.create(
+                calle=calle,
+                numero=numero,
+                codigo_postal=codigo_postal,
+                contacto=contacto,
+                email=email,
+                coordenada=coordenada,
+                municipio=municipio,
+            )
+
+        return JsonResponse(
+            {
+                "message": "Dirección guardada correctamente",
+                "id_direccion": direccion.idDireccion,
+            }
+        )

@@ -145,3 +145,17 @@ def obtener_o_crear_direccion(
         )
         direccion.save()
         return direccion
+
+
+
+
+GEOREF_API_URL = "https://apis.datos.gob.ar/georef/api/ubicacion"
+
+
+def obtener_ubicacion_desde_coordenadas(lat, lon):
+    params = {"lat": lat, "lon": lon}
+    response = requests.get(GEOREF_API_URL, params=params)
+
+    if response.status_code == 200:
+        return response.json().get("ubicacion", {})
+    return None
