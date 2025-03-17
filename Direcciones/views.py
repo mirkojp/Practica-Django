@@ -17,7 +17,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .services import obtener_info_georef,obtener_info_google_maps
 import json
-from .models import Provincia,Municipio,Coordenada,Direccion,Departamento
+from .models import Provincia, Ciudad, Coordenada, Direccion
+
 # @api_view(["GET"])
 # @token_required_without_user
 # def obtener_provincias(request):
@@ -330,36 +331,24 @@ def guardar_direccion(request):
     if request.method == "POST":
         data = json.loads(request.body)
 
-        # Extraer datos de Georef Argentina
-        id_provincia = data["georef"]["provincia"]["id"]
-        nombre_provincia = data["georef"]["provincia"]["nombre"]
-        id_departamento = data["georef"]["departamento"]["id"]
-        nombre_departamento = data["georef"]["departamento"]["nombre"]
-        id_municipio = data["georef"]["municipio"]["id"]
-        nombre_municipio = data["georef"]["municipio"]["nombre"]
-
         # Extraer datos de Google Maps
         calle = data["google"]["calle"]
         numero = data["google"]["numero"]
         codigo_postal = data["google"]["codigo_postal"]
         contacto = data.get("contacto")  # Puede ser opcional
         email = data.get("email")  # Puede ser opcional
+        lat = data["google"]["lat"]
+        lon = data["google"]["lon"]
 
-        lat = data["lat"]
-        lon = data["lon"]
+        # Extraer nombres de ciudad y provincia desde Google Maps
+        nombre_provincia = data["google"]["provincia"]["nombre"]
+        nombre_ciudad = data["google"]["ciudad"]["nombre"]
 
-        # Guardar en la base de datos
         with transaction.atomic():
-            provincia, _ = Provincia.objects.get_or_create(
-                idProvincia=id_provincia, defaults={"nombre": nombre_provincia}
-            )
-            departamento, _ = Departamento.objects.get_or_create(
-                idDepartamento=id_departamento,
-                defaults={"nombre": nombre_departamento, "provincia": provincia},
-            )
-            municipio, _ = Municipio.objects.get_or_create(
-                idMunicipio=id_municipio,
-                defaults={"nombre": nombre_municipio, "departamento": departamento},
+            provincia, _ = Provincia.objects.get_or_create(nombre=nombre_provincia)
+
+            ciudad, _ = Ciudad.objects.get_or_create(
+                nombre=nombre_ciudad, provincia=provincia
             )
 
             coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
@@ -371,12 +360,12 @@ def guardar_direccion(request):
                 contacto=contacto,
                 email=email,
                 coordenada=coordenada,
-                municipio=municipio,
+                ciudad=ciudad,
             )
 
         return JsonResponse(
             {
-                "message": "Direccion guardada correctamente",
+                "message": "Dirección guardada correctamente",
                 "id_direccion": direccion.idDireccion,
             }
         )

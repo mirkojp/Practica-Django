@@ -1,12 +1,6 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
-class Provincia(models.Model):
-    idProvincia = models.IntegerField(primary_key=True)
-    nombre = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.nombre
 
 # class Ciudad(models.Model):
 #     idCiudad = models.IntegerField(primary_key=True)
@@ -34,40 +28,35 @@ class Provincia(models.Model):
 
 
 from django.db import models
+from phonenumber_field.modelfields import PhoneNumberField
 
 
-class Coordenada(models.Model):
-    latitud = models.DecimalField(max_digits=32, decimal_places=8)
-    longitud = models.DecimalField(max_digits=32, decimal_places=8)
+class Provincia(models.Model):
+    idProvincia = models.IntegerField(primary_key=True)
+    nombre = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"({self.latitud}, {self.longitud})"
+        return self.nombre
 
 
-class Departamento(models.Model):
-    idDepartamento = models.CharField(
-        max_length=50, unique=True
-    )  # Se eliminó el límite de caracteres
-    nombre = models.CharField(max_length=100)
+class Ciudad(models.Model):
+    idCiudad = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100, unique=True)
     provincia = models.ForeignKey(
-        Provincia, on_delete=models.CASCADE, related_name="departamentos"
+        Provincia, on_delete=models.CASCADE, related_name="ciudades"
     )
 
     def __str__(self):
         return f"{self.nombre} ({self.provincia.nombre})"
 
 
-class Municipio(models.Model):
-    idMunicipio = models.CharField(
-        max_length=50, unique=True
-    )  # Se eliminó el límite de caracteres
-    nombre = models.CharField(max_length=100)
-    departamento = models.ForeignKey(
-        Departamento, on_delete=models.CASCADE, related_name="municipios"
-    )
+class Coordenada(models.Model):
+    idCoordenada = models.AutoField(primary_key=True)
+    latitud = models.DecimalField(max_digits=32, decimal_places=8)
+    longitud = models.DecimalField(max_digits=32, decimal_places=8)
 
     def __str__(self):
-        return f"{self.nombre} ({self.departamento.nombre})"
+        return f"({self.latitud}, {self.longitud})"
 
 
 class Direccion(models.Model):
@@ -80,9 +69,11 @@ class Direccion(models.Model):
     coordenada = models.OneToOneField(
         Coordenada, on_delete=models.CASCADE, related_name="direccion"
     )
-    municipio = models.ForeignKey(
-        Municipio, on_delete=models.CASCADE, related_name="direcciones"
+    ciudad = models.ForeignKey(
+        Ciudad, on_delete=models.CASCADE, related_name="direcciones"
     )
 
     def __str__(self):
-        return f"{self.calle} {self.numero}, {self.municipio.nombre} ({self.codigo_postal})"
+        return (
+            f"{self.calle} {self.numero}, {self.ciudad.nombre} ({self.codigo_postal})"
+        )
