@@ -322,7 +322,9 @@ def obtener_info_ubicacion(request):
         # Guardar en la sesión para futuras validaciones
         request.session["google_data"] = data_google
 
-        return JsonResponse({"google": data_google})
+        return JsonResponse(
+            {"coordenadas": {"latitud": lat, "longitud": lon}, "google": data_google}
+        )
 
 
 def guardar_direccion(request):
