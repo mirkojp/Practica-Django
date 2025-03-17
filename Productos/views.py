@@ -1211,10 +1211,6 @@ def gestionar_funkos_categoria(request, id):
 
 @api_view(["GET"])
 def listar_reseñas_funko(request, id):
-    # Verifica autenticación del usuario
-    usuario, error_response = userAuthorization(request)
-    if error_response:
-        return error_response
 
     try:
         # Verifica que el Funko existe
