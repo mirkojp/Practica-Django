@@ -26,14 +26,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7a#&u+kfmxgo$+9r&m-kb8+ra_(fvg8#_$b@)qft__1)byun(j'
+SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = [
     "practica-django-fxpz.onrender.com",
-    "localhost", "127.0.0.1",
+    "localhost",
+    "127.0.0.1",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 
@@ -75,7 +78,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
@@ -86,7 +89,17 @@ CORS_ALLOWED_ORIGINS = [
     "https://importfunko.netlify.app",
     "https://67351f81fcd97c0009b8cf05--neon-pudding-702e02.netlify.app",
     "https://neon-pudding-702e02.netlify.app",
-    
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
