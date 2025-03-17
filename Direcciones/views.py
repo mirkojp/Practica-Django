@@ -306,7 +306,6 @@ from .models import Provincia,Municipio,Coordenada,Direccion,Departamento
 #         )
 
 
-@csrf_exempt
 def obtener_info_ubicacion(request):
     """Recibe latitud/longitud, consulta APIs de Georef y Google, y devuelve los datos al frontend."""
     if request.method == "POST":
