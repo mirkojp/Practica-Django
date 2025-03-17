@@ -44,7 +44,6 @@ class Coordenada(models.Model):
         return f"({self.latitud}, {self.longitud})"
 
 
-
 class Departamento(models.Model):
     idDepartamento = models.CharField(
         max_length=50, unique=True
@@ -71,7 +70,7 @@ class Municipio(models.Model):
         return f"{self.nombre} ({self.departamento.nombre})"
 
 
-class Direccion(models.Model):
+class Dirección(models.Model):
     idDireccion = models.AutoField(primary_key=True)
     calle = models.CharField(max_length=255)
     numero = models.CharField(max_length=20)
