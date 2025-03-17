@@ -1,7 +1,7 @@
 from django.db import models
 from Usuarios.models import Usuario
 from Productos.models import Funko
-from Direcciones.models import Dirección
+from Direcciones.models import Direccion
 
 
 # Create your models here.
@@ -46,7 +46,7 @@ class Compra(models.Model):
 
     # Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    direccion = models.ForeignKey(Dirección, on_delete=models.PROTECT, null=False, blank=False)
+    direccion = models.ForeignKey(Direccion, on_delete=models.PROTECT, null=False, blank=False)
 
     def __str__(self):
         return f"Compra {self.id} - Estado: {self.estado} - Total: {self.total}"

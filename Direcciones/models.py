@@ -44,7 +44,6 @@ class Coordenada(models.Model):
         return f"({self.latitud}, {self.longitud})"
 
 
-
 class Departamento(models.Model):
     idDepartamento = models.CharField(
         max_length=50, unique=True

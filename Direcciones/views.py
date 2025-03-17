@@ -4,10 +4,10 @@ import requests
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-from .serializers import DirecciónSerializer
-from .models import Dirección
+from .serializers import DireccionSerializer
+from .models import Direccion
 from django.db import transaction
-from .utils import obtener_o_crear_direccion
+# from .utils import obtener_o_crear_direccion
 from django.http import JsonResponse
 from .exceptions import EntityNotFoundError
 from django.views.decorators.http import require_POST
@@ -17,7 +17,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .services import obtener_info_georef,obtener_info_google_maps
 import json
-from models import Provincia,Municipio,Coordenada,Direccion,Departamento
+from .models import Provincia,Municipio,Coordenada,Direccion,Departamento
 @api_view(["GET"])
 @token_required_without_user
 def obtener_provincias(request):
@@ -261,14 +261,14 @@ def crear_direccion(request):
         if not all([calle, numero, email, codigo_postal, id_ciudad, id_provincia]):
             return JsonResponse({"error": "Faltan datos obligatorios."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Crear o obtener la dirección
+        # Crear o obtener la Direccion
         direccion = obtener_o_crear_direccion(
             calle, numero, contacto, email, codigo_postal, id_ciudad, id_provincia
         )
 
         return JsonResponse(
             {
-                "mensaje": "Dirección creada exitosamente",
+                "mensaje": "Direccion creada exitosamente",
                 "direccion": {
                     "calle": direccion.calle,
                     "numero": direccion.numero,
@@ -295,7 +295,7 @@ def listar_direccion_por_compra(request, idCompra):
     try:
         compra = get_object_or_404(Compra, idCompra=idCompra)
 
-        direccion_data = DirecciónSerializer(compra.direccion).data
+        direccion_data = DireccionSerializer(compra.direccion).data
 
         return Response({"direccion": direccion_data}, status=status.HTTP_200_OK)
 
@@ -376,7 +376,7 @@ def guardar_direccion(request):
 
         return JsonResponse(
             {
-                "message": "Dirección guardada correctamente",
+                "message": "Direccion guardada correctamente",
                 "id_direccion": direccion.idDireccion,
             }
         )
