@@ -70,7 +70,7 @@ class Municipio(models.Model):
         return f"{self.nombre} ({self.departamento.nombre})"
 
 
-class Dirección(models.Model):
+class Direccion(models.Model):
     idDireccion = models.AutoField(primary_key=True)
     calle = models.CharField(max_length=255)
     numero = models.CharField(max_length=20)
