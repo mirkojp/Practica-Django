@@ -11,4 +11,4 @@ class ReseñaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reseña
-        fields = ['idReseña', 'contenido', 'esetrellas', 'fecha', 'usuario', 'funko']
+        fields = ['idReseña', 'contenido', 'estrellas', 'fecha', 'usuario', 'funko']
