@@ -1,9 +1,9 @@
 import requests
-from .models import Coordenada, Provincia, Departamento, Municipio, Direccion
 from django.conf import settings
 
 GEOREF_URL = "https://apis.datos.gob.ar/georef/api/ubicacion"
 GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
+
 
 def obtener_info_georef(lat, lon):
     """Consulta la API de Georef Argentina y devuelve la ubicación."""
@@ -12,6 +12,7 @@ def obtener_info_georef(lat, lon):
     if response.status_code == 200:
         return response.json().get("ubicacion", {})
     return None
+
 
 import requests
 

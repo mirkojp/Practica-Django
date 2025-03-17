@@ -1,5 +1,4 @@
-from rest_framework import serializers
-from .models import Departamento,Municipio,Coordenada,Provincia,Direccion
+
 
 # class ProvinciaSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -29,8 +28,10 @@ from .models import Departamento,Municipio,Coordenada,Provincia,Direccion
 #             "codigo_postal",
 #             "ciudad",
 #         ]
+
+
 from rest_framework import serializers
-from .models import Coordenada, Departamento, Municipio, Direccion, Provincia
+from .models import Coordenada, Provincia, Ciudad, Direccion
 
 
 class CoordenadaSerializer(serializers.ModelSerializer):
@@ -45,25 +46,17 @@ class ProvinciaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DepartamentoSerializer(serializers.ModelSerializer):
+class CiudadSerializer(serializers.ModelSerializer):
     provincia = ProvinciaSerializer()
 
     class Meta:
-        model = Departamento
-        fields = "__all__"
-
-
-class MunicipioSerializer(serializers.ModelSerializer):
-    departamento = DepartamentoSerializer()
-
-    class Meta:
-        model = Municipio
+        model = Ciudad
         fields = "__all__"
 
 
 class DireccionSerializer(serializers.ModelSerializer):
     coordenada = CoordenadaSerializer()
-    municipio = MunicipioSerializer()
+    ciudad = CiudadSerializer()
 
     class Meta:
         model = Direccion
