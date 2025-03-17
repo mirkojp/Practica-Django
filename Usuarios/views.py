@@ -604,10 +604,6 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
         
 @api_view(["POST", "GET"])
 def reseñas(request):
-    # Verifica si el usuario está autenticado
-    usuario, error_response = userAuthorization(request)
-    if error_response:
-        return error_response  # Retorna error si la autenticación falla
 
     if request.method == "POST":
         # Verifica si el usuario está autenticado
