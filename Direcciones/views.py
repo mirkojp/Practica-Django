@@ -306,9 +306,8 @@ from .models import Provincia, Ciudad, Coordenada, Direccion
 #             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
 #         )
 
-
 def obtener_info_ubicacion(request):
-    """Recibe latitud/longitud, consulta APIs de Georef y Google, y devuelve los datos al frontend."""
+    """Recibe latitud/longitud, consulta Google Maps API y almacena los datos en la sesión."""
     if request.method == "POST":
         data = json.loads(request.body)
         lat = data.get("lat")
@@ -317,14 +316,13 @@ def obtener_info_ubicacion(request):
         if not lat or not lon:
             return JsonResponse({"error": "Faltan coordenadas"}, status=400)
 
-        # Obtener datos de las APIs
-        data_georef = obtener_info_georef(lat, lon)
+        # Obtener datos de Google Maps
         data_google = obtener_info_google_maps(lat, lon)
 
-        # Guardar Georef en la sesión para validar luego
-        request.session["georef_data"] = data_georef
+        # Guardar en la sesión para futuras validaciones
+        request.session["google_data"] = data_google
 
-        return JsonResponse({"georef": data_georef, "google": data_google})
+        return JsonResponse({"google": data_google})
 
 
 def guardar_direccion(request):
