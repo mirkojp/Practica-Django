@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from .services import obtener_info_georef,obtener_info_google_maps
 import json
 from .models import Provincia, Ciudad, Coordenada, Direccion
+from django.views.decorators.csrf import csrf_exempt
 
 # @api_view(["GET"])
 # @token_required_without_user
@@ -369,3 +370,37 @@ def guardar_direccion(request):
                 "id_direccion": direccion.idDireccion,
             }
         )
+
+
+@csrf_exempt
+def obtener_direccion(request, id_direccion):
+    if request.method == "GET":
+        direccion = get_object_or_404(
+            Direccion.objects.select_related("ciudad", "coordenada"),
+            idDireccion=id_direccion,
+        )
+
+        data = {
+            "id_direccion": direccion.idDireccion,
+            "calle": direccion.calle,
+            "numero": direccion.numero,
+            "piso": direccion.piso,
+            "depto": direccion.depto,
+            "codigo_postal": direccion.codigo_postal,
+            "contacto": str(direccion.contacto) if direccion.contacto else None,
+            "email": direccion.email,
+            "coordenada": {
+                "latitud": direccion.coordenada.latitud,
+                "longitud": direccion.coordenada.longitud,
+            },
+            "ciudad": direccion.ciudad.nombre,
+            "provincia": direccion.ciudad.provincia.nombre,
+        }
+        return JsonResponse(data)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+# View traer sucursales
+# Añadir Depto y piso en models.direccion
+# GET, PUT, DELETE de direccion

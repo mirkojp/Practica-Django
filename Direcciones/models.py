@@ -63,6 +63,8 @@ class Direccion(models.Model):
     idDireccion = models.AutoField(primary_key=True)
     calle = models.CharField(max_length=255)
     numero = models.CharField(max_length=20)
+    depto = models.CharField(max_length=10, blank=True, null=True)
+    piso = models.CharField(max_length=10, blank=True, null=True)
     codigo_postal = models.CharField(max_length=20)
     contacto = PhoneNumberField(region="AR", null=True, blank=True)
     email = models.EmailField(blank=True, null=True)
@@ -74,6 +76,4 @@ class Direccion(models.Model):
     )
 
     def __str__(self):
-        return (
-            f"{self.calle} {self.numero}, {self.ciudad.nombre} ({self.codigo_postal})"
-        )
+        return f"{self.calle} {self.numero}{' Piso ' + self.piso if self.piso else ''}{' Depto ' + self.depto if self.depto else ''}, {self.ciudad.nombre} ({self.codigo_postal})"
