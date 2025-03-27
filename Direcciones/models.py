@@ -32,7 +32,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Provincia(models.Model):
-    idProvincia = models.IntegerField(primary_key=True)
+    idProvincia = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
 
     def __str__(self):
