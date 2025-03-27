@@ -330,54 +330,98 @@ def obtener_info_ubicacion(request):
 
 def guardar_direccion(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
+        data = json.loads(request.body)
 
-            # Extraer datos de Google Maps
-            calle = data["google"]["calle"]
-            numero = data["google"]["numero"]
-            codigo_postal = data["google"]["codigo_postal"]
-            contacto = data.get("contacto")  # Puede ser opcional
-            email = data.get("email")  # Puede ser opcional
-            lat = data["google"]["lat"]
-            lon = data["google"]["lon"]
+        # Extraer datos de Google Maps
+        calle = data["google"]["calle"]
+        numero = data["google"]["numero"]
+        codigo_postal = data["google"]["codigo_postal"]
+        contacto = data.get("contacto")  # Puede ser opcional
+        email = data.get("email")  # Puede ser opcional
+        lat = data["google"]["lat"]
+        lon = data["google"]["lon"]
 
-            # Extraer nombres de ciudad y provincia desde Google Maps
-            nombre_provincia = data["google"]["provincia"]["nombre"]
-            nombre_ciudad = data["google"]["ciudad"]["nombre"]
+        # Extraer nombres de ciudad y provincia desde Google Maps
+        nombre_provincia = data["google"]["provincia"]["nombre"]
+        nombre_ciudad = data["google"]["ciudad"]["nombre"]
 
-            with transaction.atomic():
-                provincia, _ = Provincia.objects.get_or_create(nombre=nombre_provincia)
-                ciudad, _ = Ciudad.objects.get_or_create(
-                    nombre=nombre_ciudad, provincia=provincia
-                )
-                coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
-                direccion = Direccion.objects.create(
-                    calle=calle,
-                    numero=numero,
-                    codigo_postal=codigo_postal,
-                    contacto=contacto,
-                    email=email,
-                    coordenada=coordenada,
-                    ciudad=ciudad,
-                )
+        with transaction.atomic():
+            provincia, _ = Provincia.objects.get_or_create(nombre=nombre_provincia)
 
-            return JsonResponse(
-                {
-                    "message": "Dirección guardada correctamente",
-                    "id_direccion": direccion.idDireccion,
-                },
-                status=201,
+            ciudad, _ = Ciudad.objects.get_or_create(
+                nombre=nombre_ciudad, provincia=provincia
             )
 
-        except KeyError as e:
-            return JsonResponse({"error": f"Falta el campo requerido: {e}"}, status=400)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Error en el formato JSON"}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": f"Error inesperado: {str(e)}"}, status=500)
+            coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
 
-    return JsonResponse({"error": "Método no permitido"}, status=405)
+            direccion = Direccion.objects.create(
+                calle=calle,
+                numero=numero,
+                codigo_postal=codigo_postal,
+                contacto=contacto,
+                email=email,
+                coordenada=coordenada,
+                ciudad=ciudad,
+            )
+
+        return JsonResponse(
+            {
+                "message": "Dirección guardada correctamente",
+                "id_direccion": direccion.idDireccion,
+            }
+        )
+
+
+# def guardar_direccion(request):
+#     if request.method == "POST":
+#         try:
+#             data = json.loads(request.body)
+
+#             # Extraer datos de Google Maps
+#             calle = data["google"]["calle"]
+#             numero = data["google"]["numero"]
+#             codigo_postal = data["google"]["codigo_postal"]
+#             contacto = data.get("contacto")  # Puede ser opcional
+#             email = data.get("email")  # Puede ser opcional
+#             lat = data["google"]["lat"]
+#             lon = data["google"]["lon"]
+
+#             # Extraer nombres de ciudad y provincia desde Google Maps
+#             nombre_provincia = data["google"]["provincia"]["nombre"]
+#             nombre_ciudad = data["google"]["ciudad"]["nombre"]
+
+#             with transaction.atomic():
+#                 provincia, _ = Provincia.objects.get_or_create(nombre=nombre_provincia)
+#                 ciudad, _ = Ciudad.objects.get_or_create(
+#                     nombre=nombre_ciudad, provincia=provincia
+#                 )
+#                 coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
+#                 direccion = Direccion.objects.create(
+#                     calle=calle,
+#                     numero=numero,
+#                     codigo_postal=codigo_postal,
+#                     contacto=contacto,
+#                     email=email,
+#                     coordenada=coordenada,
+#                     ciudad=ciudad,
+#                 )
+
+#             return JsonResponse(
+#                 {
+#                     "message": "Dirección guardada correctamente",
+#                     "id_direccion": direccion.idDireccion,
+#                 },
+#                 status=201,
+#             )
+
+#         except KeyError as e:
+#             return JsonResponse({"error": f"Falta el campo requerido: {e}"}, status=400)
+#         except json.JSONDecodeError:
+#             return JsonResponse({"error": "Error en el formato JSON"}, status=400)
+#         except Exception as e:
+#             return JsonResponse({"error": f"Error inesperado: {str(e)}"}, status=500)
+
+#     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
 @csrf_exempt
