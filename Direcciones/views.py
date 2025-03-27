@@ -346,7 +346,7 @@ def guardar_direccion(request):
         nombre_ciudad = data["google"]["ciudad"]["nombre"]
 
         with transaction.atomic():
-            provincia, _ = Provincia.objects.get_or_create(nombre=nombre_provincia)
+            provincia, _ = Provincia.objects.get(nombre=nombre_provincia)
 
             ciudad, _ = Ciudad.objects.get_or_create(
                 nombre=nombre_ciudad, provincia=provincia
