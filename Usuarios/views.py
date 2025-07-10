@@ -654,7 +654,15 @@ def reseñas(request):
         # Listar todas las reseñas
         reseñas = Reseña.objects.all().order_by("-fecha")  # Ordenadas por fecha más reciente
         serializer = ReseñaSerializer(reseñas, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # Modificar los datos para incluir el nombre de usuario en cada reseña
+        response_data = []
+        for reseña_data in serializer.data:
+            reseña_obj = Reseña.objects.get(idReseña=reseña_data['idReseña'])
+            reseña_data['nombre_usuario'] = reseña_obj.usuario.username
+            response_data.append(reseña_data)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     
 @api_view(["GET", "DELETE"])
 def gestionar_reseña(request, id):
