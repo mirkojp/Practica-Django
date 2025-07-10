@@ -155,6 +155,9 @@ def register_google(request):
             # Crea o obtiene el token de autenticación
             token = Token.objects.create(user=usuario)
             serializer = UsuarioSerializer(instance=usuario)
+
+            # Crear el carrito asociado al usuario recién creado
+            carrito = Carrito.objects.create(usuario=usuario)
             
 
             # Devuelve un token o mensaje de éxito al frontend
@@ -386,6 +389,9 @@ def twitter_callback(request):
         # Crea o obtiene el token de autenticación
         token = Token.objects.create(user=usuario)
         serializer = UsuarioSerializer(instance=usuario)
+
+        # Crear el carrito asociado al usuario recién creado
+        carrito = Carrito.objects.create(usuario=usuario)
         
         return Response({
             'success': True,
@@ -469,6 +475,9 @@ def github_callback(request):
                 
             # Crea o obtiene el token de autenticación
             token, created = Token.objects.get_or_create(user=usuario)
+
+            # Crear el carrito asociado al usuario recién creado
+            carrito = Carrito.objects.create(usuario=usuario)
             
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
@@ -663,7 +672,12 @@ def gestionar_reseña(request, id):
     if request.method == "GET":
         # Serializar y devolver la reseña
         serializer = ReseñaSerializer(reseña)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Crear un diccionario con los datos de la reseña y agregar el nombre del usuario
+        response_data = serializer.data
+
+        response_data['nombre_usuario'] = reseña.usuario.nombre
+        return Response(response_data, status=status.HTTP_200_OK)
 
     elif request.method == "DELETE":
         # Verificar que el usuario sea dueño de la reseña antes de borrarla
