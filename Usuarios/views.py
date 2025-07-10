@@ -659,7 +659,7 @@ def reseñas(request):
         response_data = []
         for reseña_data in serializer.data:
             reseña_obj = Reseña.objects.get(idReseña=reseña_data['idReseña'])
-            reseña_data['nombre_usuario'] = reseña_obj.usuario.username
+            reseña_data['nombre_usuario'] = reseña_obj.usuario.nombre
             response_data.append(reseña_data)
         
         return Response(response_data, status=status.HTTP_200_OK)
