@@ -423,6 +423,7 @@ def operaciones_compras(request, usuario, id):
 #         except Exception as e:
 #    return Response(data={"body": payment_response}, status=400)
 
+"""
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(
@@ -578,3 +579,5 @@ def CreatePreferenceFromCart(request, usuario):
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+"""
