@@ -8,8 +8,14 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
 from .models import Provincia, Ciudad, Coordenada, Direccion
-from .serializers import DireccionSerializer, CoordenadaSerializer, CiudadSerializer, ProvinciaSerializer
+from .serializers import (
+    DireccionSerializer,
+    CoordenadaSerializer,
+    CiudadSerializer,
+    ProvinciaSerializer,
+)
 from .services import obtener_info_georef, obtener_info_google_maps
+
 
 class DireccionViewSet(viewsets.ViewSet):
     """
@@ -20,7 +26,9 @@ class DireccionViewSet(viewsets.ViewSet):
         """
         GET: Lista todas las direcciones.
         """
-        direcciones = Direccion.objects.select_related("ciudad__provincia", "coordenada").all()
+        direcciones = Direccion.objects.select_related(
+            "ciudad__provincia", "coordenada"
+        ).all()
         serializer = DireccionSerializer(direcciones, many=True)
         return Response(serializer.data)
 
@@ -30,7 +38,7 @@ class DireccionViewSet(viewsets.ViewSet):
         """
         direccion = get_object_or_404(
             Direccion.objects.select_related("ciudad__provincia", "coordenada"),
-            idDireccion=pk
+            idDireccion=pk,
         )
         serializer = DireccionSerializer(direccion)
         return Response(serializer.data)
@@ -47,14 +55,14 @@ class DireccionViewSet(viewsets.ViewSet):
                 # Actualizar coordenada
                 coordenada_data = data.get("coordenada", {})
                 coordenada_serializer = CoordenadaSerializer(
-                    instance=direccion.coordenada,
-                    data=coordenada_data,
-                    partial=True
+                    instance=direccion.coordenada, data=coordenada_data, partial=True
                 )
                 if coordenada_serializer.is_valid():
                     coordenada_serializer.save()
                 else:
-                    return Response(coordenada_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        coordenada_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Actualizar ciudad y provincia
                 ciudad_data = data.get("ciudad", {})
@@ -66,11 +74,13 @@ class DireccionViewSet(viewsets.ViewSet):
                     ciudad_nombre = ciudad_data.get("nombre")
                     if ciudad_nombre:
                         ciudad, _ = Ciudad.objects.get_or_create(
-                            nombre=ciudad_nombre,
-                            provincia=provincia
+                            nombre=ciudad_nombre, provincia=provincia
                         )
                     else:
-                        return Response({"error": "Nombre de ciudad es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(
+                            {"error": "Nombre de ciudad es requerido"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                 else:
                     ciudad = direccion.ciudad
 
@@ -84,9 +94,11 @@ class DireccionViewSet(viewsets.ViewSet):
                     "contacto": data.get("contacto", direccion.contacto),
                     "email": data.get("email", direccion.email),
                     "ciudad": ciudad.idCiudad,
-                    "coordenada": direccion.coordenada.idCoordenada
+                    "coordenada": direccion.coordenada.idCoordenada,
                 }
-                serializer = DireccionSerializer(instance=direccion, data=direccion_data, partial=True)
+                serializer = DireccionSerializer(
+                    instance=direccion, data=direccion_data, partial=True
+                )
                 if serializer.is_valid():
                     serializer.save()
                     return Response(serializer.data)
@@ -106,9 +118,13 @@ class DireccionViewSet(viewsets.ViewSet):
                 if direccion.coordenada:
                     direccion.coordenada.delete()
                 direccion.delete()
-                return Response({"message": "Dirección eliminada correctamente"}, status=status.HTTP_204_NO_CONTENT)
+                return Response(
+                    {"message": "Dirección eliminada correctamente"},
+                    status=status.HTTP_204_NO_CONTENT,
+                )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Funciones existentes (mantenidas para compatibilidad)
 def obtener_info_ubicacion(request):
@@ -130,6 +146,7 @@ def obtener_info_ubicacion(request):
         return JsonResponse(
             {"coordenadas": {"latitud": lat, "longitud": lon}, "google": data_google}
         )
+
 
 def guardar_direccion(request):
     if request.method == "POST":
@@ -174,6 +191,7 @@ def guardar_direccion(request):
             }
         )
 
+
 @csrf_exempt
 def obtener_direccion(request, id_direccion):
     if request.method == "GET":
@@ -201,6 +219,8 @@ def obtener_direccion(request, id_direccion):
         return JsonResponse(data)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
 # View traer sucursales
 # Añadir Depto y piso en models.direccion
 # GET, PUT, DELETE de direccion
