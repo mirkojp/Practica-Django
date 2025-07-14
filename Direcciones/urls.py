@@ -5,6 +5,7 @@ from .views import (
     obtener_info_ubicacion,
     guardar_direccion,
     obtener_direccion,
+    recalcular_y_guardar_direccion,
 )
 
 # Configurar el router para el ViewSet
@@ -22,6 +23,12 @@ urlpatterns = [
         obtener_direccion,
         name="obtener_direccion",
     ),
-    # Nuevas rutas del ViewSet
+    # Nueva ruta para recalcular y guardar
+    path(
+        "recalcular-y-guardar-direccion/",
+        recalcular_y_guardar_direccion,
+        name="recalcular_y_guardar_direccion",
+    ),
+    # Rutas del ViewSet
     path("", include(router.urls)),
 ]

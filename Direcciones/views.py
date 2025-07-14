@@ -15,7 +15,7 @@ from .serializers import (
     ProvinciaSerializer,
 )
 from .services import obtener_info_georef, obtener_info_google_maps
-
+from django.conf import settings
 
 class DireccionViewSet(viewsets.ViewSet):
     """
@@ -217,6 +217,112 @@ def obtener_direccion(request, id_direccion):
             "provincia": direccion.ciudad.provincia.nombre,
         }
         return JsonResponse(data)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+def recalcular_y_guardar_direccion(request):
+    """
+    Recibe datos del frontend, verifica si calle o número fueron modificados,
+    recalcula coordenadas si es necesario y guarda/actualiza la dirección.
+    """
+    if request.method == "POST":
+        data = json.loads(request.body)
+        lat = data.get("lat")
+        lon = data.get("lon")
+        calle = data.get("calle")
+        numero = data.get("numero")
+        codigo_postal = data.get("codigo_postal")
+        contacto = data.get("contacto")
+        email = data.get("email")
+        nombre_ciudad = data.get("ciudad")
+        nombre_provincia = data.get("provincia")
+        id_direccion = data.get("id_direccion")  # Opcional, para actualizar
+
+        if (
+            not lat
+            or not lon
+            or not calle
+            or not numero
+            or not nombre_ciudad
+            or not nombre_provincia
+        ):
+            return JsonResponse({"error": "Faltan datos requeridos"}, status=400)
+
+        # Obtener datos originales de Google Maps para comparar
+        data_google = obtener_info_google_maps(lat, lon)
+        if not data_google:
+            return JsonResponse({"error": "Error al consultar Google Maps"}, status=400)
+
+        # Verificar si calle o número fueron modificados
+        calle_modificada = calle != data_google.get("calle")
+        numero_modificado = numero != data_google.get("numero")
+
+        # Si calle o número fueron modificados, recalcular coordenadas
+        if calle_modificada or numero_modificado:
+            # Construir la dirección para geocodificación
+            direccion_completa = (
+                f"{calle} {numero}, {nombre_ciudad}, {nombre_provincia}, Argentina"
+            )
+            url = f"https://maps.googleapis.com/maps/api/geocode/json?address={direccion_completa}&key={settings.GOOGLE_MAPS_API_KEY}"
+            response = requests.get(url)
+
+            if response.status_code == 200 and response.json().get("status") == "OK":
+                result = response.json()["results"][0]
+                lat = result["geometry"]["location"]["lat"]
+                lon = result["geometry"]["location"]["lng"]
+            else:
+                return JsonResponse(
+                    {"error": "Error al recalcular coordenadas"}, status=400
+                )
+
+        try:
+            with transaction.atomic():
+                # Obtener o crear provincia
+                provincia = get_object_or_404(Provincia, nombre=nombre_provincia)
+
+                # Obtener o crear ciudad
+                ciudad, _ = Ciudad.objects.get_or_create(
+                    nombre=nombre_ciudad, provincia=provincia
+                )
+
+                if id_direccion:
+                    # Actualizar dirección existente
+                    direccion = get_object_or_404(Direccion, idDireccion=id_direccion)
+                    direccion.calle = calle
+                    direccion.numero = numero
+                    direccion.codigo_postal = codigo_postal
+                    direccion.contacto = contacto
+                    direccion.email = email
+                    direccion.ciudad = ciudad
+                    # Actualizar coordenadas
+                    direccion.coordenada.latitud = lat
+                    direccion.coordenada.longitud = lon
+                    direccion.coordenada.save()
+                    direccion.save()
+                else:
+                    # Crear nueva dirección
+                    coordenada = Coordenada.objects.create(latitud=lat, longitud=lon)
+                    direccion = Direccion.objects.create(
+                        calle=calle,
+                        numero=numero,
+                        codigo_postal=codigo_postal,
+                        contacto=contacto,
+                        email=email,
+                        coordenada=coordenada,
+                        ciudad=ciudad,
+                    )
+
+                return JsonResponse(
+                    {
+                        "message": "Dirección procesada correctamente",
+                        "id_direccion": direccion.idDireccion,
+                        "coordenadas": {"latitud": lat, "longitud": lon},
+                    }
+                )
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
