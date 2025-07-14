@@ -33,9 +33,8 @@ from django.http import JsonResponse
 @api_view(["POST", "GET", "DELETE"])
 @token_required
 def carritos(request, usuario):
-
+    
     if request.method == "POST":
-
         # Verificar que el Funko y la cantidad fueron proporcionados
         id_funko = request.data.get("idFunko")
         cantidad = request.data.get("cantidad")
@@ -46,7 +45,6 @@ def carritos(request, usuario):
             )
 
         try:
-
             # Obtener el carrito del usuario
             carrito = Carrito.objects.get(usuario=usuario)
 
@@ -67,20 +65,29 @@ def carritos(request, usuario):
                 )
                 precio_funko *= 1 - (descuento.porcentaje / 100)
 
-            # Calcular el subtotal de CarritoItem
-            subtotal = precio_funko * cantidad
-
-            # Crear el CarritoItem
+            # Verificar si ya existe un CarritoItem para este Funko
             with transaction.atomic():
-                carrito_item = CarritoItem.objects.create(
-                    carrito=carrito, funko=funko, cantidad=cantidad, subtotal=subtotal
-                )
+                carrito_item = CarritoItem.objects.filter(
+                    carrito=carrito, funko=funko
+                ).first()
 
-                # Actualizar el subtotal en Carrito
-                carrito.total += subtotal
+                if carrito_item:
+                    # Actualizar cantidad y subtotal del CarritoItem existente
+                    carrito_item.cantidad += cantidad
+                    carrito_item.subtotal = precio_funko * carrito_item.cantidad
+                    carrito_item.save()
+                else:
+                    # Crear nuevo CarritoItem si no existe
+                    subtotal = precio_funko * cantidad
+                    carrito_item = CarritoItem.objects.create(
+                        carrito=carrito, funko=funko, cantidad=cantidad, subtotal=subtotal
+                    )
+
+                # Actualizar el total del carrito
+                carrito.total = sum(item.subtotal for item in CarritoItem.objects.filter(carrito=carrito))
                 carrito.save()
 
-            # Serializar el CarritoItem creado
+            # Serializar el CarritoItem
             serializer = CarritoItemSerializer(carrito_item)
 
             return Response(
@@ -347,10 +354,10 @@ def operaciones_compras(request, usuario, id):
                 )
 
             # Cambios permitidos de estado
-            if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADA":
-                compra.estado = "ENVIADA"
-            elif compra.estado == "ENVIADA" and nuevo_estado == "ENTREGADA":
-                compra.estado = "ENTREGADA"
+            if compra.estado == "PENDIENTE" and nuevo_estado == "ENVIADO":
+                compra.estado = "ENVIADO"
+            elif compra.estado == "ENVIADO" and nuevo_estado == "ENTREGADO":
+                compra.estado = "ENTREGADO"
             else:
                 return Response(
                     {
@@ -416,6 +423,7 @@ def operaciones_compras(request, usuario, id):
 #         except Exception as e:
 #    return Response(data={"body": payment_response}, status=400)
 
+"""
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(
@@ -571,3 +579,5 @@ def CreatePreferenceFromCart(request, usuario):
         )
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+"""

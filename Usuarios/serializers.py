@@ -7,6 +7,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
         fields = ["idUsuario", "nombre", "password", "contacto", "email"]
 
 class ReseñaSerializer(serializers.ModelSerializer):
+    usuario = serializers.PrimaryKeyRelatedField(queryset=Usuario.objects.all())
+
     class Meta:
         model = Reseña
-        fields = ["idReseña", "contenido", "esetrellas", "fecha"]
+        fields = ['idReseña', 'contenido', 'estrellas', 'fecha', 'usuario', 'funko']
