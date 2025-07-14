@@ -58,7 +58,7 @@ def login(request):
         return Response("Falta parametos de autenticacion", status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 
 @api_view(["POST", "GET"])  #Resuelve /usuarios
 def register(request):
@@ -121,8 +121,6 @@ def register(request):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
 
 
 # Configura tu CLIENT_ID aquí (el ID de cliente de tu aplicación de Google)
@@ -170,7 +168,7 @@ def register_google(request):
         except Exception as e:
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["POST"])
 def login_google(request):
     if request.method == 'POST':
@@ -206,7 +204,7 @@ def login_google(request):
         except Exception as ex:
             # Manejo de otras excepciones
             return Response({"error": str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["POST"])
 def register_facebook(request):
     if request.method == 'POST':
@@ -261,7 +259,7 @@ def register_facebook(request):
         except Exception as e:
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["POST"])
 def login_facebook(request):
     if request.method == 'POST':
@@ -283,11 +281,11 @@ def login_facebook(request):
             # Realiza la solicitud a la API de Facebook
             response = requestf.get(user_info_url, params=params)
             response_data = response.json()
-            
+
             # Si hubo un error con la solicitud a Facebook
             if 'error' in response_data:
                 return Response({'error': response_data['error']['message']}, status=400)
-            
+
             # Extrae los datos del usuario
             name = response_data.get('name')
             email = response_data.get('email')
@@ -295,7 +293,6 @@ def login_facebook(request):
             # Verifica si el usuario ya existe
             usuario = Usuario.objects.get(email=email, nombre=name)
 
-            
             # Crea o obtiene el token de autenticación
             token = Token.objects.get(user=usuario)
             serializer = UsuarioSerializer(instance=usuario)
@@ -313,8 +310,8 @@ def login_facebook(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-consumerKey = "jtiMOwxO7zvnACaPDuAmy9mB1"
-consumerSecret = "nqGa1pPVQp0Rh4aaYGGLQr4JNzIAUzv5iwaQIfXbFDqkoIbpet"
+consumerKey = "zvuyvz3or8uMwzGGugpcl2f2Q"
+consumerSecret = "ZYbD70FPfubZcwvKMrggprs1Uk9MBfLPPu4x5IQ1PYUZzAsCdK"
 # Vista para iniciar la autenticación
 @api_view(['GET'])
 def twitter_login(request):
@@ -402,19 +399,19 @@ def twitter_callback(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 @api_view(['GET'])
 def github_login(request):
     # Redirige al usuario a la URL de autorización de GitHub
     github_auth_url = "https://github.com/login/oauth/authorize"
     redirect_uri = "https://practica-django-fxpz.onrender.com/auth/github/callback/"
-    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
+    url = f"{github_auth_url}?client_id=Ov23liRrw8fXN3Jsu8lg&redirect_uri={redirect_uri}&scope=user"
     return Response({"url": url}, status=status.HTTP_200_OK)
-    #return redirect(url)
+    # return redirect(url)
 
 @api_view(['GET'])
 def github_callback(request):
-        
+
     try:
         # Obtiene el `code` que GitHub envía a esta vista como parte del flujo de autorización
         code = request.GET.get('code')
@@ -425,9 +422,9 @@ def github_callback(request):
         # Intercambia el código de autorización por un access token
         token_url = "https://github.com/login/oauth/access_token"
         data = {
-            'client_id': "Ov23liqrSR5ByM2QzZKw",
-            'client_secret': "207aa17bd8971c20c3c50268daf43bca72bbed40",
-            'code': code
+            "client_id": "Ov23liRrw8fXN3Jsu8lg",
+            "client_secret": "3dd87453ac4e52dd5aab8e2c6aacccdb80c5fc1b",
+            "code": code,
         }
         headers = {'Accept': 'application/json'}
         token_response = requestf.post(token_url, data=data, headers=headers)
@@ -443,7 +440,6 @@ def github_callback(request):
         user_info_response = requestf.get(user_info_url, headers=headers)
         user_data = user_info_response.json()
 
-
         # Aquí puedes crear o verificar el usuario en tu base de datos
         # Ejemplo de guardar email y nombre en la BD (puede variar según tu modelo)
         name = user_data["login"]
@@ -455,7 +451,6 @@ def github_callback(request):
 
         # Encuentra el email principal o público del usuario
         primary_email = next((email['email'] for email in emails if email['primary']), None)
-
 
         if primary_email and name:
             # Guardar o autenticar el usuario en la BD
@@ -472,13 +467,12 @@ def github_callback(request):
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
-                
+
             # Crea o obtiene el token de autenticación
             token, created = Token.objects.get_or_create(user=usuario)
 
             # Crear el carrito asociado al usuario recién creado
             carrito = Carrito.objects.create(usuario=usuario)
-            
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
             frontend_url = f"https://importfunko.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
@@ -610,7 +604,7 @@ def listar_usuario(request, id):    #Resuelve /usuarios/{id}
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 @api_view(["POST", "GET"])
 def reseñas(request):
 
@@ -663,7 +657,7 @@ def reseñas(request):
             response_data.append(reseña_data)
         
         return Response(response_data, status=status.HTTP_200_OK)
-    
+
 @api_view(["GET", "DELETE"])
 def gestionar_reseña(request, id):
     # Verifica si el usuario está autenticado
@@ -694,7 +688,7 @@ def gestionar_reseña(request, id):
 
         reseña.delete()
         return Response({"mensaje": "Reseña eliminada correctamente."}, status=status.HTTP_200_OK)
-    
+
 @api_view(["GET"])
 def listar_favoritos(request):
     # Verifica la autenticación del usuario
