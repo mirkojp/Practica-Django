@@ -29,6 +29,6 @@ urlpatterns = [
         recalcular_y_guardar_direccion,
         name="recalcular_y_guardar_direccion",
     ),
-    # Rutas del ViewSet
-    path("", include(router.urls)),
+    # # Rutas del ViewSet
+    # path("", include(router.urls)),
 ]
