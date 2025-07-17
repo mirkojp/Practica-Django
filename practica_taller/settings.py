@@ -91,6 +91,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://neon-pudding-702e02.netlify.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://importfunko.vercel.app"
 ]
 
 CORS_ALLOW_METHODS = [
@@ -105,6 +106,7 @@ CORS_ALLOW_METHODS = [
 CSRF_TRUSTED_ORIGINS = [
     "https://neon-pudding-702e02.netlify.app",
     "https://practica-django-fxpz.onrender.com",
+    "https://importfunko.vercel.app"
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
