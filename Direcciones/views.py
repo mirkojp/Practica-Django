@@ -375,7 +375,7 @@ def crear_direccion(request):
 
             # Get Provincia
             try:
-                provincia = Provincia.objects.get(idProvincia=data["provincia"])
+                provincia = Provincia.objects.get(nombre=data["provincia"])
             except Provincia.DoesNotExist:
                 return JsonResponse(
                     {"error": "Provincia no encontrada"},
