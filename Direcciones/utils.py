@@ -147,15 +147,15 @@
 #         return direccion
 
 
-import requests
+# import requests
 
-GEOREF_API_URL = "https://apis.datos.gob.ar/georef/api/ubicacion"
+# GEOREF_API_URL = "https://apis.datos.gob.ar/georef/api/ubicacion"
 
 
-def obtener_ubicacion_desde_coordenadas(lat, lon):
-    params = {"lat": lat, "lon": lon}
-    response = requests.get(GEOREF_API_URL, params=params)
+# def obtener_ubicacion_desde_coordenadas(lat, lon):
+#     params = {"lat": lat, "lon": lon}
+#     response = requests.get(GEOREF_API_URL, params=params)
 
-    if response.status_code == 200:
-        return response.json().get("ubicacion", {})
-    return None
+#     if response.status_code == 200:
+#         return response.json().get("ubicacion", {})
+#     return None
