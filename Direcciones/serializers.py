@@ -129,4 +129,5 @@ class DireccionSerializer(serializers.ModelSerializer):
             "contacto",
             "email",
             "ciudad",
+            "ciudad_id"
         ]
