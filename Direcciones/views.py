@@ -350,7 +350,6 @@ from phonenumber_field.phonenumber import PhoneNumber
 import json
 
 
-@csrf_exempt
 @api_view(["POST"])
 @token_required_without_user
 def crear_direccion(request):
@@ -372,7 +371,6 @@ def crear_direccion(request):
                         {"error": f"El campo {field} es obligatorio"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-
             # Get Provincia by name
             try:
                 provincia = Provincia.objects.get(nombre=data["provincia"])
@@ -381,7 +379,6 @@ def crear_direccion(request):
                     {"error": "Provincia no encontrada"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
             # Get or create Ciudad
             ciudad, created = Ciudad.objects.get_or_create(
                 nombre=data["ciudad"],
@@ -417,7 +414,6 @@ def crear_direccion(request):
                     )
 
             # Use serializer for validation and creation
-            print(serializer_data)
             serializer = DireccionSerializer(data=serializer_data)
             if serializer.is_valid():
                 direccion = serializer.save()
