@@ -192,7 +192,7 @@ def carritos(request, usuario):
 def compras(request, usuario):
 
     if request.method == "POST":
-        # Modificar esta logica, cuando se crea una compra se crea una direccion <-- Mirko se encarga de esto 14/7
+        # Modificar esta logica, cuando se crea una compra se crea una direccion 
         # Obtener el ID de la dirección desde el body de la request
         id_direccion = request.data.get("idDireccion")
         if not id_direccion:
