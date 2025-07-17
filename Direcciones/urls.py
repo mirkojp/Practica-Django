@@ -1,5 +1,3 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
 # from .views import (
 #     DireccionViewSet,
 #     obtener_info_ubicacion,
@@ -33,7 +31,8 @@ from rest_framework.routers import DefaultRouter
 #     # # Rutas del ViewSet
 #     # path("", include(router.urls)),
 # ]
-
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import crear_direccion, obtener_direccion
 
 urlpatterns = [
