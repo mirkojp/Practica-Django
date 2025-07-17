@@ -373,7 +373,7 @@ def crear_direccion(request):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            # Get Provincia
+            # Get Provincia by name
             try:
                 provincia = Provincia.objects.get(nombre=data["provincia"])
             except Provincia.DoesNotExist:
@@ -400,21 +400,7 @@ def crear_direccion(request):
                 "email": data.get("email", ""),
             }
 
-            # Handle phone number
-            if data.get("contacto"):
-                try:
-                    contacto = PhoneNumber.from_string(data["contacto"], region="AR")
-                    if not contacto.is_valid():
-                        return JsonResponse(
-                            {"error": "Número de teléfono inválido"},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    serializer_data["contacto"] = str(contacto)
-                except Exception:
-                    return JsonResponse(
-                        {"error": "Formato de número de teléfono inválido"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+
 
             # Use serializer for validation and creation
             serializer = DireccionSerializer(data=serializer_data)
