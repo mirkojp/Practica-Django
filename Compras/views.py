@@ -953,7 +953,9 @@ def mercado_pago_webhook(request):
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
         handle_payment_failure(payment_id, direccion_id, f"Webhook processing failed: {str(e)}")
-        return HttpResponse(status=200)
+        return Response(
+                {"error": f"{str(signature)}   {str(secret)}"}, status=status.HTTP_200_OK
+            )
 
 
 
