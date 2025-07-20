@@ -8,9 +8,8 @@ from .models import Carrito, CarritoItem, Compra, CompraItem
 from datetime import date
 from .serializers import CarritoItemSerializer, CompraItemSerializer, CompraSerializer
 from Productos.models import Funko, FunkoDescuento, Descuento
-from django.db import IntegrityError
+
 from django.db import transaction
-from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from django.db.models import Q
 from decorators.token_decorators import (
     token_required,
@@ -23,12 +22,18 @@ import mercadopago
 import json
 from django.http import JsonResponse
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
+from .services import validate_signature
+import os
+from django.http import HttpResponse
+import logging
 
+from Direcciones.models import Direccion
 
+logger = logging.getLogger(__name__)
 # Create your views here.
 @api_view(["POST", "GET", "DELETE"])
 @token_required
@@ -191,8 +196,11 @@ def carritos(request, usuario):
 @token_required
 def compras(request, usuario):
 
-    if request.method == "POST":
-        # Modificar esta logica, cuando se crea una compra se crea una direccion 
+    if request.method == "POST": 
+        # DEPRECATED DO NOT USE
+        # IF U USE THIS IM GOING TO FUCKING KILL YOU
+        # ATTE MIRKO
+        # Modificar esta logica, cuando se crea una compra se crea una direccion
         # Obtener el ID de la dirección desde el body de la request
         id_direccion = request.data.get("idDireccion")
         if not id_direccion:
@@ -423,14 +431,13 @@ def operaciones_compras(request, usuario, id):
 #         except Exception as e:
 #    return Response(data={"body": payment_response}, status=400)
 
-"""
 
 # Inicializa el cliente de MercadoPago con tu Access Token (clave privada)
 sdk = mercadopago.SDK(
     settings.MERCADOPAGO_ACCESS_TOKEN_TEST
 )  # Reemplaza con tu Access Token
 
-
+""""
 @api_view(["POST"])
 @csrf_exempt
 def CreatePreference(request, *args, **kwargs):
@@ -531,53 +538,425 @@ def CreatePreferenceUser(request):
     preference_id = preference_response["response"]["id"]
 
     return JsonResponse({"preference_id": preference_id})
+"""
+
+# @api_view(["POST"])
+# @token_required
+# @csrf_exempt
+# def CreatePreferenceFromCart(request, usuario):
+#     try:
+
+#         # Obtener el carrito del usuario
+#         carrito = Carrito.objects.get(usuario=usuario)
+
+#         # Obtener los ítems del carrito
+#         carrito_items = CarritoItem.objects.filter(carrito=carrito)
+
+#         # Crear la lista de ítems para MercadoPago
+#         items_for_mp = []
+#         for item in carrito_items:
+#             funko = item.funko
+#             item_data = {
+#                 "title": funko.nombre,  # Nombre del funko
+#                 "quantity": item.cantidad,  # Cantidad del ítem en el carrito
+#                 "currency_id": "ARS",  # Moneda
+#                 "unit_price": float(item.subtotal / item.cantidad),  # Precio unitario
+#             }
+#             items_for_mp.append(item_data)
+
+#         # Datos de la preferencia
+#         preference_data = {
+#             "items": items_for_mp,
+#             "back_urls": {
+#                 "success": "https://importfunko.netlify.app/dashboard.html",
+#                 "failure": "https://importfunko.netlify.app/dashboard.html",
+#             },
+#             "auto_return": "approved",
+#         }
+
+#         # Crear la preferencia en MercadoPago
+#         preference_response = sdk.preference().create(preference_data)
+#         preference_id = preference_response["response"]["id"]
+
+#         return JsonResponse({"preference_id": preference_id})
+
+#     except Carrito.DoesNotExist:
+#         return Response(
+#             {"error": "Carrito no encontrado para el usuario."},
+#             status=status.HTTP_404_NOT_FOUND,
+#         )
+#     except Exception as e:
+#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
 @token_required
-@csrf_exempt
+# @csrf_exempt
 def CreatePreferenceFromCart(request, usuario):
     try:
+        # Validate usuario
+        if not usuario:
+            return Response(
+                {"error": "Usuario no proporcionado o inválido."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         # Obtener el carrito del usuario
         carrito = Carrito.objects.get(usuario=usuario)
 
         # Obtener los ítems del carrito
         carrito_items = CarritoItem.objects.filter(carrito=carrito)
+        envio = request.data.get("envio")
+
+        # --------------------IMPORTANT--------------------------------#
+        # NEED NEW LOGIC HERE, TO CHECK IF DISCOUNT ARE STILL VALID
+        # THAT THING IS ONLY BEEN CHECKED ON FRONTEND, AND 
+        # ON THE ASSIGNATION OF FUNKO INTO CARRITO
+        # --------------------IMPORTANT--------------------------------#
+
+        # Problably it will work something like that, im to tired to do it rnw
+        # precio_funko = funko.precio
+        # today = date.today()
+
+        # descuento_activo = FunkoDescuento.objects.filter(
+        #     funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
+        # ).first()
+
+        # if descuento_activo:
+        #     descuento = Descuento.objects.get(
+        #         idDescuento=descuento_activo.descuento.idDescuento
+        #     )
+        #     precio_funko *= 1 - (descuento.porcentaje / 100)
+        
+        # --------------------IMPORTANT--------------------------------#
+        # NEED NEW LOGIC HERE, TO CHECK IF DISCOUNT ARE STILL VALID
+        # THAT THING IS ONLY BEEN CHECKED ON FRONTEND, AND 
+        # ON THE ASSIGNATION OF FUNKO INTO CARRITO
+        # --------------------IMPORTANT--------------------------------#
+
+
+        # Validar que el carrito no esté vacío
+        if not carrito_items.exists():
+            return Response(
+                {"error": "El carrito está vacío."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Obtener direccion_id desde el request o el modelo
+        direccion_id = request.data.get("direccion_id") # <- añadir direccion a envio de frontend
+        if not direccion_id or envio is None:
+            return Response(
+                {"error": "direccion_id y envio es requerido"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Crear la lista de ítems para MercadoPago
+
+        # for item in carrito_items:
+        #     funko = item.funko
+        #     item_data = {
+        #         "title": funko.nombre,
+        #         "quantity": item.cantidad,
+        #         "currency_id": "ARS",
+        #         "unit_price": float(item.subtotal / item.cantidad),
+        #     }
+        #     items_for_mp.append(item_data)
+        today = date.today()
         items_for_mp = []
         for item in carrito_items:
             funko = item.funko
+            precio_funko = funko.precio
+            
+            # Verificar si hay un descuento activo para el funko
+            descuento_activo = FunkoDescuento.objects.filter(
+                funko=funko,
+                fecha_inicio__lte=today,
+                fecha_expiracion__gte=today
+            ).first()
+
+            if descuento_activo:
+                descuento = Descuento.objects.get(
+                    idDescuento=descuento_activo.descuento.idDescuento
+                )
+                precio_funko = precio_funko * (1 - (descuento.porcentaje / 100))
+
             item_data = {
-                "title": funko.nombre,  # Nombre del funko
-                "quantity": item.cantidad,  # Cantidad del ítem en el carrito
-                "currency_id": "ARS",  # Moneda
-                "unit_price": float(item.subtotal / item.cantidad),  # Precio unitario
+                "title": funko.nombre,
+                "quantity": item.cantidad,
+                "currency_id": "ARS",
+                "unit_price": float(precio_funko),
             }
             items_for_mp.append(item_data)
+
+        if envio > 0:  # Only append if envio is a positive value
+            envio_value = float(envio)
+            costo_envio = {
+                "title": "Costo de Envío",
+                "quantity": 1,
+                "currency_id": "ARS",
+                "unit_price": envio_value,  # Use the envio value from frontend
+            }
+            items_for_mp.append(costo_envio)
+            carrito.envio = envio_value
+
+        # Encode carrito.id and direccion_id as JSON in external_reference
+        external_reference = json.dumps(
+            {"carrito_id": str(carrito.id), "direccion_id": str(direccion_id)}
+        )
+
+        # Validar longitud de external_reference
+        if len(external_reference) > 256:
+            direccion = Direccion.objects.get(direccion_id)
+            direccion.delete()
+            return Response(
+                {"error": "External reference excede los 256 caracteres."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Datos de la preferencia
         preference_data = {
             "items": items_for_mp,
+            "payer": {"email": usuario.email},
             "back_urls": {
-                "success": "https://importfunko.netlify.app/dashboard.html",
-                "failure": "https://importfunko.netlify.app/dashboard.html",
+                "success": "https://importfunko.vercel.app/thank-you",
+                "failure": "https://importfunko.vercel.app/thank-you",
+                # "pending": "https://importfunko.netlify.app/dashboard.html", No pending i dont want to work
             },
             "auto_return": "approved",
+            "notification_url": "https://practica-django-fxpz.onrender.com/webhook/mercado-pago/",  # A donde se manda la notificacion
+            "external_reference": external_reference,
         }
 
         # Crear la preferencia en MercadoPago
         preference_response = sdk.preference().create(preference_data)
-        preference_id = preference_response["response"]["id"]
+        if preference_response["status"] != 201:
+            direccion = Direccion.objects.get(direccion_id)
+            direccion.delete()
+            return Response(
+                {
+                    "error": f"Error al crear la preferencia: {preference_response.get('message', 'Desconocido')}"
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
-        return JsonResponse({"preference_id": preference_id})
+        preference_id = preference_response["response"]["id"]
+        return Response({"preference_id": preference_id}, status=status.HTTP_200_OK)
 
     except Carrito.DoesNotExist:
         return Response(
             {"error": "Carrito no encontrado para el usuario."},
             status=status.HTTP_404_NOT_FOUND,
         )
+    except mercadopago.exceptions.MPException as mp_error:
+        return Response(
+            {"error": f"Error de MercadoPago: {str(mp_error)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        print(f"Error en CreatePreferenceFromCart: {str(e)}")
+        return Response(
+            {"error": "Error interno del servidor."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
-"""
+
+@api_view(["POST"])
+@csrf_exempt
+def mercado_pago_webhook(request):
+
+    
+    def refund_payment(payment_id, reason):
+        """
+        Initiate a full refund for a payment.
+        """
+        try:
+            # Check if payment is already refunded
+            payment_response = sdk.payment().get(payment_id)
+            payment = payment_response["response"]
+            if payment.get("status") == "refunded":
+                logger.info(f"Payment {payment_id} already refunded")
+                return
+
+            # Initiate full refund
+            refund_response = sdk.refund().create(payment_id)
+            if refund_response["status"] == 201:
+                logger.info(f"Refund initiated for payment {payment_id}: {reason}")
+            else:
+                logger.error(
+                    f"Refund failed for payment {payment_id}: {refund_response.get('message')}"
+                )
+        except mercadopago.exceptions.MPException as e:
+            logger.error(f"Refund error for payment {payment_id}: {str(e)}")
+
+
+    def handle_payment_failure(payment_id, direccion_id, reason):
+        logger.error(reason)
+        if payment_id:
+            refund_payment(payment_id, reason)
+        try:
+            direccion = Direccion.objects.get(id=direccion_id)
+            direccion.delete()
+        except Direccion.DoesNotExist:
+            logger.error(f"Address not found for direccion_id: {direccion_id}")
+
+    try:
+        signature = request.headers.get("x-signature", "")
+        secret = os.getenv("MERCADO_PAGO_SIGNING_SECRET")
+        if not validate_signature(request.body, signature, secret):
+            logger.error("Invalid signature received")
+            return Response(
+                {"error": "Invalid signature"}, status=status.HTTP_200_OK
+            )
+
+        payload = json.loads(request.body.decode("utf-8"))
+        topic = payload.get("topic")
+        payment_id = payload.get("id")
+
+        if topic == "payment":
+            payment_response = sdk.payment().get(payment_id)
+            payment = payment_response["response"]
+            payment_status = payment.get("status")
+            external_reference = payment.get("external_reference", "")
+            # Parse external_reference
+            try:
+                ref_data = json.loads(external_reference)
+                carrito_id = ref_data.get("carrito_id")
+                direccion_id = ref_data.get("direccion_id")
+            except (json.JSONDecodeError, KeyError):
+                logger.error(f"Invalid external_reference format: {external_reference}")
+                # Initiate refund due to invalid external_reference
+                handle_payment_failure(
+                    payment_id,
+                    direccion_id,
+                    f"Invalid external_reference format: {external_reference}",
+                )
+                return Response(
+                    {"error": "Invalid external_reference format"},
+                    status=status.HTTP_200_OK,
+                )
+
+            # Fetch and validate cart
+            try:
+                carrito = Carrito.objects.get(id=carrito_id)
+            except Carrito.DoesNotExist:
+                logger.error(f"Cart not found for carrito_id: {carrito_id}")
+                # Initiate refund due to missing cart
+                handle_payment_failure(
+                    payment_id,
+                    direccion_id,
+                    f"Cart not found for carrito_id: {carrito_id}",
+                )
+                return Response(
+                    {"error": "Cart not found"},
+                    status=status.HTTP_200_OK,
+                )
+
+            if payment_status == "approved":
+                try:
+                    # Verificar si el carrito tiene items
+                    carrito_items = CarritoItem.objects.filter(carrito=carrito)
+                    if not carrito_items.exists():
+                        handle_payment_failure(
+                            payment_id, direccion_id, "Empty cart"
+                        )
+
+                        return Response(
+                            {"error": "Empty cart."},
+                            status=status.HTTP_200_OK,
+                        )
+                    direccion = Direccion.objects.get(idDireccion=direccion_id)
+                    # Crear la compra con valores temporales de subtotal y total
+                    today = date.today()
+                    compra = Compra.objects.create(
+                            usuario=carrito.usuario,
+                            direccion=direccion,
+                            subtotal=0,  # Valor temporal
+                            total=0,  # Valor temporal
+                            fecha=today,
+                            estado="PENDIENTE",
+                        )
+
+                    # Variables para calcular el subtotal y total de la compra
+                    subtotal_compra = 0
+
+                    # Crear las líneas de compra (CompraItem) a partir de los items del carrito
+                    with transaction.atomic():
+                        for item in carrito_items:
+
+                            # Verificar si hay suficiente stock
+                            if item.funko.stock >= item.cantidad:
+                                # Restar el stock del Funko
+                                item.funko.stock -= item.cantidad
+                                item.funko.save()
+                                item.funko.refresh_from_db()  # Asegurar que el cambio se refleja en la BD
+                                print(f"Nuevo stock de {item.funko.nombre}: {item.funko.stock}")
+
+                            else:
+                                return Response(
+                                        {"error": f"Stock insuficiente para el Funko {item.funko.nombre}."},
+                                        status=status.HTTP_200_OK,
+                                    )
+
+                            # Crear el CompraItem basado en cada CarritoItem
+                            compra_item = CompraItem.objects.create(
+                                    compra=compra,
+                                    funko=item.funko,
+                                    cantidad=item.cantidad,
+                                    subtotal=item.subtotal,
+                                )
+                            # Sumar el subtotal del item al subtotal total de la compra
+                            subtotal_compra += compra_item.subtotal
+
+                        # Actualizar subtotal y total en la compra
+                        compra.subtotal = subtotal_compra
+                        compra.total = subtotal_compra * 0.21  # Ajusta si necesitas aplicar impuestos o costos adicionales
+                        compra.total = compra.total + carrito.envio
+                        compra.envio = carrito.envio
+                        compra.save()
+
+                        # Limpiar el carrito después de crear la compra
+                        carrito.items.all().delete()  # Eliminar todos los CarritoItems
+                        carrito.total = 0  # Reiniciar el total del carrito
+                        carrito.envio = 0 # reinicia el envio del carrito
+                        carrito.save()
+
+                    # Serializar y devolver la compra creada
+                    serializer = CompraSerializer(compra)
+                    return Response(
+                            {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data, "idUsuario": usuario.idUsuario},
+                            status=status.HTTP_201_CREATED,
+                        )
+
+                except Exception as e:
+                    handle_payment_failure(
+                        payment_id, direccion_id, f"Purchase creation failed: {str(e)}"
+                    )
+                    return Response(
+                        {"error": f"Purchase creation failed: {str(e)}"},
+                        status=status.HTTP_200_OK,
+                    )
+
+            elif payment_status == "pending":
+                # We waiting boiiiiiis
+                return Response({"status": "Pending"}, status=status.HTTP_200_OK)
+            elif payment_status in ["rejected", "cancelled"]:
+                handle_payment_failure(
+                    payment_id, direccion_id, f"Payment {payment_status}"
+                )
+                return Response(
+                    {"error": f"Payment {payment_status}"},
+                    status=status.HTTP_200_OK,
+                )
+
+        return HttpResponse(status=200)
+
+    except Exception as e:
+        logger.error(f"Webhook processing failed: {str(e)}")
+        handle_payment_failure(payment_id, direccion_id, f"Webhook processing failed: {str(e)}")
+        return HttpResponse(status=200)
+
+
+
+
+# New atrbute on carrito and compra for shipment price
+# Only add shipment price

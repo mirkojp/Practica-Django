@@ -36,6 +36,6 @@ from rest_framework.routers import DefaultRouter
 from .views import crear_direccion, obtener_direccion
 
 urlpatterns = [
-    path("direcciones", crear_direccion, name="crear-direccion"),
+    path("crear-direccion", crear_direccion, name="crear-direccion"),
     path("direcciones/<int:id>", obtener_direccion, name="obtener-direccion"),
 ]
