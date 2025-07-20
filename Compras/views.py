@@ -923,7 +923,7 @@ def mercado_pago_webhook(request):
                     # Serializar y devolver la compra creada
                     serializer = CompraSerializer(compra)
                     return Response(
-                            {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data, "idUsuario": usuario.idUsuario},
+                            {"Mensaje": "Compra creada exitosamente.", "Compra": serializer.data},
                             status=status.HTTP_201_CREATED,
                         )
 
