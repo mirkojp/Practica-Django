@@ -340,13 +340,11 @@ from rest_framework.decorators import (
 
 )
 from phonenumber_field.phonenumber import PhoneNumber
-import json
-
 
 from rest_framework import status
 from .models import Direccion, Ciudad, Provincia
 from .serializers import DireccionSerializer
-from phonenumber_field.phonenumber import PhoneNumber
+
 import json
 
 

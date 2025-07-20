@@ -2,13 +2,14 @@ from django.db import models
 from Usuarios.models import Usuario
 from Productos.models import Funko
 from Direcciones.models import Direccion
-
+from django.core.validators import MinValueValidator
 
 # Create your models here.
 
 class Carrito(models.Model):
     idCarrito = models.AutoField(primary_key=True)
     total = models.PositiveIntegerField(default=0, blank=True)
+    envio = models.FloatField(default=0, blank=True, validators=[MinValueValidator(0.0)])
 
     #Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
@@ -43,7 +44,7 @@ class Compra(models.Model):
     total = models.PositiveIntegerField(null=False, blank=False)
     fecha = models.DateField(null=False, blank=False)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
-
+    envio = models.FloatField(default=0, blank=True, validators=[MinValueValidator(0.0)])
     # Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     direccion = models.ForeignKey(Direccion, on_delete=models.PROTECT, null=False, blank=False)
