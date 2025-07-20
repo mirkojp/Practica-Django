@@ -836,7 +836,7 @@ def mercado_pago_webhook(request):
                 )
                 return Response(
                     {"error": "Invalid external_reference format"},
-                    status=status.HTTP_200_OK,
+                    status=status.HTTP_201_OK,
                 )
 
             # Fetch and validate cart
@@ -952,7 +952,8 @@ def mercado_pago_webhook(request):
                     status=status.HTTP_200_OK,
                 )
 
-        return HttpResponse(status=200)
+        #return HttpResponse(status=200)
+        return Response({"error":"skipped payment"}, status.HTTP_202_ACCEPTED)
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
