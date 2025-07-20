@@ -805,7 +805,7 @@ def mercado_pago_webhook(request):
         json_data = json.loads(request.body)
         mp_id = json_data['data']['id']
 
-        if not validate_signature(request.body, signature, secret):
+        if not validate_signature(request.body, signature, secret, xRequestId):
             logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)} ")
             return Response(
                 {"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}"},
