@@ -805,7 +805,7 @@ def mercado_pago_webhook(request):
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         if not validate_signature(request.body, signature, secret):
             logger.info("Request Headers:\n" + headers_text)
-            return Response(headers_text, content_type="text/plain", status=200)
+            return Response({"error": f"{headers_text}"}, status=status.HTTP_200_OK)
             # logger.error(f"{str(signature)}   {str(secret)}")
             # return Response(
             #     {"error": f"{str(signature)}   {str(secret)}"},
