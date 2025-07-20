@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+import urllib
 from Usuarios.models import Token, Usuario
 from .models import Carrito, CarritoItem, Compra, CompraItem
 from datetime import date
@@ -799,18 +800,20 @@ def mercado_pago_webhook(request):
 
     try:
         signature = request.headers.get("x-signature", "")
-        headers_text = "\n".join(
-            f"{name}: {value}" for name, value in request.headers.items()
-        )
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
+        xRequestId = request.headers.get("x-request-id")
+        # Obtain Query params related to the request URL
+        queryParams = urllib.parse.parse_qs(request.url.query)
+
+        # Extract the "data.id" from the query params
+        dataID = queryParams.get("data.id", [""])[0]
+
         if not validate_signature(request.body, signature, secret):
-            logger.info(f"{headers_text}   {validate_signature(request.body, signature, secret)}")
-            return Response({"error": f"{str(headers_text)} {str(signature)}"}, status=status.HTTP_200_OK)
-            # logger.error(f"{str(signature)}   {str(secret)}")
-            # return Response(
-            #     {"error": f"{str(signature)}   {str(secret)}"},
-            #     status=status.HTTP_200_OK,
-            # )
+            logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(dataID)} ")
+            return Response(
+                {"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(dataID)}"},
+                status=status.HTTP_200_OK,
+            )
 
         payload = json.loads(request.body.decode("utf-8"))
         topic = payload.get("topic")
