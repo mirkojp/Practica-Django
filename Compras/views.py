@@ -764,7 +764,6 @@ def CreatePreferenceFromCart(request, usuario):
 @csrf_exempt
 def mercado_pago_webhook(request):
 
-    
     def refund_payment(payment_id, reason):
         """
         Initiate a full refund for a payment.
@@ -788,7 +787,6 @@ def mercado_pago_webhook(request):
         except mercadopago.exceptions.MPException as e:
             logger.error(f"Refund error for payment {payment_id}: {str(e)}")
 
-
     def handle_payment_failure(payment_id, direccion_id, reason):
         logger.error(reason)
         if payment_id:
@@ -803,9 +801,10 @@ def mercado_pago_webhook(request):
         signature = request.headers.get("x-signature", "")
         secret = os.getenv("MERCADO_PAGO_SIGNING_SECRET")
         if not validate_signature(request.body, signature, secret):
-            logger.error("Invalid signature received")
+            logger.error(f"{str(signature)}   {str(secret)}")
             return Response(
-                {"error": "Invalid signature"}, status=status.HTTP_200_OK
+                {"error": f"{str(signature)}   {str(secret)}"},
+                status=status.HTTP_200_OK,
             )
 
         payload = json.loads(request.body.decode("utf-8"))
@@ -956,8 +955,6 @@ def mercado_pago_webhook(request):
         return Response(
                 {"error": f"{str(signature)}   {str(secret)}"}, status=status.HTTP_200_OK
             )
-
-
 
 
 # New atrbute on carrito and compra for shipment price
