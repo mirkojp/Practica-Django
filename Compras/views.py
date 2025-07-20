@@ -799,7 +799,7 @@ def mercado_pago_webhook(request):
 
     try:
         signature = request.headers.get("x-signature", "")
-        secret = os.getenv("MERCADO_PAGO_SIGNING_SECRET")
+        secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         if not validate_signature(request.body, signature, secret):
             logger.error(f"{str(signature)}   {str(secret)}")
             return Response(
