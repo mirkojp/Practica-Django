@@ -802,16 +802,13 @@ def mercado_pago_webhook(request):
         signature = request.headers.get("x-signature", "")
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         xRequestId = request.headers.get("x-request-id")
-        # Obtain Query params related to the request URL
-        queryParams = urllib.parse.parse_qs(request.url.query)
-
-        # Extract the "data.id" from the query params
-        dataID = queryParams.get("data.id", [""])[0]
+        json_data = json.loads(request.body)
+        mp_id = json_data['data']['id']
 
         if not validate_signature(request.body, signature, secret):
-            logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(dataID)} ")
+            logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)} ")
             return Response(
-                {"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(dataID)}"},
+                {"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}"},
                 status=status.HTTP_200_OK,
             )
 
