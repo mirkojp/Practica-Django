@@ -953,7 +953,7 @@ def mercado_pago_webhook(request):
                 )
 
         #return HttpResponse(status=200)
-        return Response({"error":"skipped payment"}, status.HTTP_202_ACCEPTED)
+        return Response({"error":"skipped payment"}, status.HTTP_201_CREATED)
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
