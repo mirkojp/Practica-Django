@@ -702,7 +702,7 @@ def CreatePreferenceFromCart(request, usuario):
 
         # Encode carrito.id and direccion_id as JSON in external_reference
         external_reference = json.dumps(
-            {"carrito_id": str(carrito.id), "direccion_id": str(direccion_id)}
+            {"carrito_id": str(carrito.idCarrito), "direccion_id": str(direccion_id)}
         )
 
         # Validar longitud de external_reference
