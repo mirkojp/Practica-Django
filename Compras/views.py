@@ -806,9 +806,11 @@ def mercado_pago_webhook(request):
         mp_id = request.GET.get("data.id")
 
         if not validate_signature(request.body, signature, secret, xRequestId):
-            logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)} ")
+            logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}")
             return Response(
-                {"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}"},
+                {
+                    "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}"
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -951,7 +953,7 @@ def mercado_pago_webhook(request):
                     status=status.HTTP_200_OK,
                 )
 
-        #return HttpResponse(status=200)
+        # return HttpResponse(status=200)
         return Response({"error":"skipped payment"}, status.HTTP_201_CREATED)
 
     except Exception as e:
