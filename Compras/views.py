@@ -666,7 +666,7 @@ def CreatePreferenceFromCart(request, usuario):
         items_for_mp = []
         for item in carrito_items:
             funko = item.funko
-            precio_funko = funko.precio
+            precio_funko = funko.precio * 0.21
             
             # Verificar si hay un descuento activo para el funko
             descuento_activo = FunkoDescuento.objects.filter(
@@ -683,7 +683,7 @@ def CreatePreferenceFromCart(request, usuario):
 
             item_data = {
                 "title": funko.nombre,
-                "quantity": item.cantidad,
+                "quantity": item.cantidad ,
                 "currency_id": "ARS",
                 "unit_price": float(precio_funko),
             }
