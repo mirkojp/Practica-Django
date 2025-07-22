@@ -666,7 +666,7 @@ def CreatePreferenceFromCart(request, usuario):
         items_for_mp = []
         for item in carrito_items:
             funko = item.funko
-            precio_funko = funko.precio * 0.21
+            precio_funko = funko.precio 
             
             # Verificar si hay un descuento activo para el funko
             descuento_activo = FunkoDescuento.objects.filter(
@@ -913,7 +913,6 @@ def mercado_pago_webhook(request):
 
                         # Actualizar subtotal y total en la compra
                         compra.subtotal = subtotal_compra
-                        compra.total = subtotal_compra * 0.21  # Ajusta si necesitas aplicar impuestos o costos adicionales
                         compra.total = compra.total + carrito.envio
                         compra.envio = carrito.envio
                         compra.save()
