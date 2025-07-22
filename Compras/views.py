@@ -803,7 +803,7 @@ def mercado_pago_webhook(request):
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         xRequestId = request.headers.get("x-request-id")
         json_data = json.loads(request.body)
-        mp_id = json_data['data']['id']
+        mp_id = request.GET.get("data.id")
 
         if not validate_signature(request.body, signature, secret, xRequestId):
             logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)} ")
