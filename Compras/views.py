@@ -818,9 +818,10 @@ def mercado_pago_webhook(request):
 
         payload = json.loads(request.body.decode("utf-8"))
         topic = payload.get("topic")
+        actionType = payload.get("type")
 
         # Extract resource_id based on topic
-        if topic == "merchant_order":
+        if topic == "merchant_order" or actionType == "merchant_order":
             resource_url = payload.get("resource", "")
             # Extract ID from URL (e.g., last part of https://api.mercadolibre.com/merchant_orders/32652741650)
             try:
@@ -850,7 +851,7 @@ def mercado_pago_webhook(request):
                 status=status.HTTP_200_OK,
             )
 
-        if topic == "merchant_order":
+        if topic == "merchant_order" or actionType == "merchant_order":
             # Fetch merchant order from Mercado Pago
             merchant_order_response = sdk.merchant_order().get(resource_id)
             merchant_order = merchant_order_response["response"]
@@ -907,7 +908,7 @@ def mercado_pago_webhook(request):
                 status=status.HTTP_200_OK,
             )
 
-        elif topic == "payment":
+        elif topic == "payment" or actionType == "payment":
             payment_response = sdk.payment().get(resource_id)
             payment = payment_response["response"]
             payment_status = payment.get("status")
