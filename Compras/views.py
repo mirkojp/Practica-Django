@@ -933,7 +933,7 @@ def mercado_pago_webhook(request):
 
             # Fetch and validate cart
             try:
-                carrito = Carrito.objects.get(id=carrito_id)
+                carrito = Carrito.objects.get(idCarrito = carrito_id)
             except Carrito.DoesNotExist:
                 logger.error(f"Cart not found for carrito_id: {carrito_id}")
                 handle_payment_failure(
