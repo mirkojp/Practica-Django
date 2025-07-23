@@ -807,11 +807,11 @@ def mercado_pago_webhook(request):
 
         if not validate_signature(request.body, signature, secret, xRequestId):
             logger.error(
-                f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}"
+                f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}     {str(request.headers)}"
             )
             return Response(
                 {
-                    "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}"
+                    "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}    {str(request.headers)}"
                 },
                 status=status.HTTP_200_OK,
             )
@@ -1042,7 +1042,8 @@ def mercado_pago_webhook(request):
                     status=status.HTTP_200_OK,
                 )
 
-        return Response({"error": "Invalid topic"}, status=status.HTTP_201_CREATED)
+        return Response({"error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}    {str(request.headers)}"},
+                        status=status.HTTP_201_CREATED)
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
