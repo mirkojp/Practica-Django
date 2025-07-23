@@ -965,7 +965,7 @@ def mercado_pago_webhook(request):
             {
                 "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}"
             },
-            status=status.HTTP_201_OK,
+            status=status.HTTP_201_CREATED,
         )
 
     except Exception as e:
