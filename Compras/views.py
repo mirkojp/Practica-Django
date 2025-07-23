@@ -802,8 +802,12 @@ def mercado_pago_webhook(request):
         signature = request.headers.get("x-signature", "")
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         xRequestId = request.headers.get("x-request-id")
-        json_data = json.loads(request.body)
         mp_id = request.GET.get("data.id")
+
+        # For merchant order if cancelled remove direccion
+        # Also do logic to fetch mercado pago and return the merchant order, validate signature with that data
+
+        # For payment is status == Aproved do logic for turning carrito into Compra
 
         if not validate_signature(request.body, signature, secret, xRequestId):
             logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}")
@@ -954,7 +958,15 @@ def mercado_pago_webhook(request):
                 )
 
         # return HttpResponse(status=200)
-        return Response({"error":"skipped payment"}, status.HTTP_201_CREATED)
+        # return Response({"error": "skipped payment"}, status.HTTP_201_CREATED)
+
+        logger.error(f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}")
+        return Response(
+            {
+                "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}"
+            },
+            status=status.HTTP_201_OK,
+        )
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
