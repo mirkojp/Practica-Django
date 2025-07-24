@@ -310,10 +310,9 @@ def login_facebook(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-#consumerKey = "zvuyvz3or8uMwzGGugpcl2f2Q"
-#consumerSecret = "ZYbD70FPfubZcwvKMrggprs1Uk9MBfLPPu4x5IQ1PYUZzAsCdK"
-consumerKey = "jtiMOwxO7zvnACaPDuAmy9mB1"
-consumerSecret = "nqGa1pPVQp0Rh4aaYGGLQr4JNzIAUzv5iwaQIfXbFDqkoIbpet"
+consumerKey = "zvuyvz3or8uMwzGGugpcl2f2Q"
+consumerSecret = "ZYbD70FPfubZcwvKMrggprs1Uk9MBfLPPu4x5IQ1PYUZzAsCdK"
+
 # Vista para iniciar la autenticación
 @api_view(['GET'])
 def twitter_login(request):
