@@ -405,7 +405,7 @@ def github_login(request):
     # Redirige al usuario a la URL de autorización de GitHub
     github_auth_url = "https://github.com/login/oauth/authorize"
     redirect_uri = "https://practica-django-fxpz.onrender.com/auth/github/callback/"
-    url = f"{github_auth_url}?client_id=Ov23liRrw8fXN3Jsu8lg&redirect_uri={redirect_uri}&scope=user"
+    url = f"{github_auth_url}?client_id=Ov23liqrSR5ByM2QzZKw&redirect_uri={redirect_uri}&scope=user"
     return Response({"url": url}, status=status.HTTP_200_OK)
     # return redirect(url)
 
@@ -423,7 +423,7 @@ def github_callback(request):
         token_url = "https://github.com/login/oauth/access_token"
         data = {
             "client_id": "Ov23liqrSR5ByM2QzZKw",
-            "client_secret": "207aa17bd8971c20c3c50268daf43bca72bbed40",
+            "client_secret": "bec8349901eb904f4b1671b0c082582404c8dbf6",
             "code": code,
         }
         headers = {'Accept': 'application/json'}
