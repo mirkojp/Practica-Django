@@ -422,8 +422,8 @@ def github_callback(request):
         # Intercambia el código de autorización por un access token
         token_url = "https://github.com/login/oauth/access_token"
         data = {
-            "client_id": "Ov23liRrw8fXN3Jsu8lg",
-            "client_secret": "3dd87453ac4e52dd5aab8e2c6aacccdb80c5fc1b",
+            "client_id": "Ov23liqrSR5ByM2QzZKw",
+            "client_secret": "207aa17bd8971c20c3c50268daf43bca72bbed40",
             "code": code,
         }
         headers = {'Accept': 'application/json'}
@@ -462,7 +462,7 @@ def github_callback(request):
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
-                    url = f'https://importfunko.netlify.app?errorIntegridad=""'
+                    url = f'https://importfunkologin.netlify.app/?errorIntegridad=""'
                     return redirect(url)
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
@@ -475,7 +475,7 @@ def github_callback(request):
             carrito = Carrito.objects.create(usuario=usuario)
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
-            frontend_url = f"https://importfunko.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
+            frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
             return redirect(frontend_url)
 
         else:
