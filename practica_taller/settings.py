@@ -107,7 +107,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://neon-pudding-702e02.netlify.app",
     "https://practica-django-fxpz.onrender.com",
     "https://importfunko.vercel.app",
-    "https://importfunko-eight.vercel.app/"
+    "https://importfunkologin.netlify.app"
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
