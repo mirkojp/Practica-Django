@@ -22,6 +22,7 @@ from django.shortcuts import redirect
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from Productos.models import Funko
 from Productos.serializers import FunkoSerializer
+from urllib.parse import urlencode
 
 
 # Create your views here.
@@ -406,12 +407,21 @@ def twitter_callback(request):
         serializer = UsuarioSerializer(instance=usuario)
 
         
-        return Response({
-            'success': True,
-            'message': 'Usuario autenticado exitosamente.',
-            'usuario': serializer.data,
-            "token" : token.key,
-        }, status=status.HTTP_200_OK)
+        #return Response({
+        #    'success': True,
+        #    'message': 'Usuario autenticado exitosamente.',
+        #    'usuario': serializer.data,
+        #    "token" : token.key,
+        #}, status=status.HTTP_200_OK)
+
+        user = {
+            "idUsuario": usuario.idUsuario,
+            "is_staff": usuario.is_staff,
+        }
+
+        frontend_url = "https://importfunko.vercel.app/register"
+        redirect_url = f"{frontend_url}?token={token}&userId={user['idUsuario']}&isStaff={str(user['is_staff']).lower()}"
+        return redirect(redirect_url)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -497,12 +507,21 @@ def github_callback(request):
             #return redirect(frontend_url)
 
             # Devuelve un token o mensaje de éxito al frontend
-            return Response({
-                'success': True,
-                'message': 'Usuario autenticado exitosamente.',
-                'usuario': serializer.data,
-                "token" : token.key
+            #return Response({
+            #    'success': True,
+            #    'message': 'Usuario autenticado exitosamente.',
+            #    'usuario': serializer.data,
+            #    "token" : token.key
+            #})
+
+            # Redirigir al frontend con los datos en la URL
+            query_params = urlencode({
+                'token': token,
+                'userId': usuario.idUsuario,
+                'isStaff': usuario.is_staff
             })
+
+            return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
 
         else:
             return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
