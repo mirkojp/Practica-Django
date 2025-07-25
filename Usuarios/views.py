@@ -431,8 +431,24 @@ def twitter_callback(request):
 
         return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
 
+    #except Exception as e:
+    #    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    except IntegrityError as e:
+        # Manejo del error de unicidad
+        if "duplicate key value violates unique constraint" in str(e):
+            error_message = "duplicate key value violates unique constraint"
+        else:
+            error_message = str(e)
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': error_message}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
+    
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Otros errores
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': str(e)}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
 
 @api_view(['GET'])
 def github_login(request):
@@ -496,8 +512,12 @@ def github_callback(request):
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
-                    url = f'https://importfunkologin.netlify.app/?errorIntegridad=""'
-                    return redirect(url)
+                    #url = f'https://importfunkologin.netlify.app/?errorIntegridad=""'
+                    #return redirect(url)
+                
+                    redirect_url = "https://importfunko.vercel.app/social-login"
+                    params = {'error': "duplicate key value violates unique constraint"}
+                    return redirect(f"{redirect_url}?{urlencode(params)}")
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
