@@ -527,10 +527,18 @@ def operaciones_funkos(request, id):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        #elif request.method == "DELETE":
+        #    funko.delete()  # Esto ahora borra el Funko y su imagen en BD y Cloudinary
+        #    return Response(
+        #        {"Mensaje": "Funko eliminado correctamente"}, status=status.HTTP_200_OK
+        #    )
+
         elif request.method == "DELETE":
-            funko.delete()  # Esto ahora borra el Funko y su imagen en BD y Cloudinary
+            funko.stock = 0  # Establece el stock a 0 en lugar de eliminar
+            funko.save()     # Guarda los cambios en la base de datos
             return Response(
-                {"Mensaje": "Funko eliminado correctamente"}, status=status.HTTP_200_OK
+                {"Mensaje": "Stock del Funko actualizado a 0 correctamente"}, 
+                status=status.HTTP_200_OK
             )
 
     except Token.DoesNotExist:
