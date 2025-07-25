@@ -471,13 +471,22 @@ def github_callback(request):
 
             # Crea o obtiene el token de autenticación
             token, created = Token.objects.get_or_create(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
 
             # Crear el carrito asociado al usuario recién creado
             carrito = Carrito.objects.create(usuario=usuario)
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
-            frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
-            return redirect(frontend_url)
+            #frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
+            #return redirect(frontend_url)
+
+            # Devuelve un token o mensaje de éxito al frontend
+            return Response({
+                'success': True,
+                'message': 'Usuario autenticado exitosamente.',
+                'usuario': serializer.data,
+                "token" : token.key
+            })
 
         else:
             return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
