@@ -369,15 +369,15 @@ def twitter_callback(request):
         )
         user_info = twitter.get(user_info_url).json()
 
-        return Response({
-            'success': True,
-            'info': user_info,
-            'info-email': user_info.get("email"),
-            'info_name': user_info.get("name"),
-        }, status=status.HTTP_200_OK)
+        #return Response({
+            #'success': True,
+            #'info': user_info,
+            #'info-email': user_info.get("email"),
+            #'info_name': user_info.get("name"),
+        #}, status=status.HTTP_200_OK)
 
         # Procesa la información del usuario
-        email = user_info.get("email")
+        email = user_info.get("screen_name") + "@gmail.com"
         name = user_info.get("name")
 
         # Verifica si el usuario ya existe
