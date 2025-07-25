@@ -377,7 +377,14 @@ def twitter_callback(request):
         #}, status=status.HTTP_200_OK)
 
         # Procesa la información del usuario
-        email = user_info.get("screen_name") + "@gmail.com"
+        email = user_info.get("email")
+        if not email:
+            screen_name = user_info.get("screen_name")
+            if screen_name:
+                email = screen_name + "@gmail.com"
+            else:
+                email = None  # O manejar el caso de que también falte el screen_name
+                
         name = user_info.get("name")
 
         # Verifica si el usuario ya existe
