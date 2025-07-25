@@ -414,14 +414,22 @@ def twitter_callback(request):
         #    "token" : token.key,
         #}, status=status.HTTP_200_OK)
 
-        user = {
-            "idUsuario": usuario.idUsuario,
-            "is_staff": usuario.is_staff,
-        }
+        #user = {
+        #    "idUsuario": usuario.idUsuario,
+        #    "is_staff": usuario.is_staff,
+        #}
 
-        frontend_url = "https://importfunko.vercel.app/register"
-        redirect_url = f"{frontend_url}?token={token}&userId={user['idUsuario']}&isStaff={str(user['is_staff']).lower()}"
-        return redirect(redirect_url)
+        #frontend_url = "https://importfunko.vercel.app/register"
+        #redirect_url = f"{frontend_url}?token={token}&userId={user['idUsuario']}&isStaff={str(user['is_staff']).lower()}"
+        #return redirect(redirect_url)
+    
+        query_params = urlencode({
+                'token': token,
+                'userId': usuario.idUsuario,
+                'isStaff': usuario.is_staff
+            })
+
+        return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
