@@ -337,8 +337,8 @@ def twitter_login(request):
 # Vista de callback que Twitter redirige con oauth_token y oauth_verifier
 @api_view(['GET'])
 def twitter_callback(request):
-    oauth_token = request.data.get('oauth_token')
-    oauth_verifier = request.data.get('oauth_verifier')
+    oauth_token = request.GET.get('oauth_token')
+    oauth_verifier = request.GET.get('oauth_verifier')
 
     if not oauth_token or not oauth_verifier:
         return Response({"error": "Faltan parámetros para la autenticación"}, status=status.HTTP_400_BAD_REQUEST)
