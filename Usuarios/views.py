@@ -402,7 +402,7 @@ def twitter_callback(request):
                 carrito = Carrito.objects.create(usuario=usuario)
             
         # Crea o obtiene el token de autenticación
-        token = Token.objects.create(user=usuario)
+        token, created = Token.objects.get_or_create(user=usuario)
         serializer = UsuarioSerializer(instance=usuario)
 
         
