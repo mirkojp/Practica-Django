@@ -552,9 +552,16 @@ def github_callback(request):
             return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
 
         else:
-            return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            #return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            redirect_url = "https://importfunko.vercel.app/social-login"
+            params = {'error': "User data retrieval failed"}
+            return redirect(f"{redirect_url}?{urlencode(params)}")
+        
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Otros errores
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': str(e)}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
