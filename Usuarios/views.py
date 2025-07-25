@@ -310,8 +310,8 @@ def login_facebook(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-consumerKey = "zvuyvz3or8uMwzGGugpcl2f2Q"
-consumerSecret = "ZYbD70FPfubZcwvKMrggprs1Uk9MBfLPPu4x5IQ1PYUZzAsCdK"
+consumerKey = "wphvPcDJ4x6ApQbLplHTPzLjA"
+consumerSecret = "95ZV166DuDM785iITd1ZbLjtqm60DXerIuAOgoUEh1AfV69rtd"
 
 # Vista para iniciar la autenticación
 @api_view(['GET'])
