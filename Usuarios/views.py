@@ -335,7 +335,7 @@ def twitter_login(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Vista de callback que Twitter redirige con oauth_token y oauth_verifier
-@api_view(['POST'])
+@api_view(['GET'])
 def twitter_callback(request):
     oauth_token = request.data.get('oauth_token')
     oauth_verifier = request.data.get('oauth_verifier')
