@@ -954,25 +954,26 @@ def mercado_pago_webhook(request):
                         handle_payment_failure(resource_id, direccion_id, "Empty cart")
                         return Response(
                             {"error": "Empty cart."},
-                            status=status.HTTP_200_OK,
+                            status=status.HTTP_201_OK,
                         )
                     direccion = Direccion.objects.get(idDireccion=direccion_id)
                     # Crear la compra con valores temporales de subtotal y total
-                    today = date.today()
-                    compra = Compra.objects.create(
-                        usuario=carrito.usuario,
-                        direccion=direccion,
-                        subtotal=0,  # Valor temporal
-                        total=0,  # Valor temporal
-                        fecha=today,
-                        estado="PENDIENTE",
-                    )
 
-                    # Variables para calcular el subtotal y total de la compra
-                    subtotal_compra = 0
 
                     # Crear las líneas de compra (CompraItem) a partir de los items del carrito
                     with transaction.atomic():
+                        today = date.today()
+                        compra = Compra.objects.create(
+                            usuario=carrito.usuario,
+                            direccion=direccion,
+                            subtotal=0,  # Valor temporal
+                            total=0,  # Valor temporal
+                            fecha=today,
+                            estado="PENDIENTE",
+                        )
+
+                    # Variables para calcular el subtotal y total de la compra
+                        subtotal_compra = 0
                         for item in carrito_items:
                             # Verificar si hay suficiente stock
                             if item.funko.stock >= item.cantidad:
@@ -1003,7 +1004,7 @@ def mercado_pago_webhook(request):
 
                         # Actualizar subtotal y total en la compra
                         compra.subtotal = subtotal_compra
-                        compra.total = compra.subtotal + carrito.envio
+                        compra.total = compra.subtotal 
                         compra.envio = carrito.envio
                         compra.save()
 
@@ -1029,7 +1030,7 @@ def mercado_pago_webhook(request):
                     )
                     return Response(
                         {"error": f"Purchase creation failed: {str(e)}"},
-                        status=status.HTTP_200_OK,
+                        status=status.HTTP_201_CREATED,
                     )
 
             elif payment_status == "pending":
