@@ -384,26 +384,27 @@ def twitter_callback(request):
                 email = screen_name + "@gmail.com"
             else:
                 email = None  # O manejar el caso de que también falte el screen_name
-                
+
         name = user_info.get("name")
 
-        # Verifica si el usuario ya existe
-        usuario = Usuario.objects.filter(email=email)
+        if email and name:
+            # Guardar o autenticar el usuario en la BD
+            # Devuelve el token de autenticación al frontend
 
-        # Crea una sesión o token para el usuario
-        if usuario:
-            if not usuario.nombre == name:
-                return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            usuario = Usuario.objects.create(email=email, nombre=name)
-            usuario.save()
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email).first()
+
+            # Crea una sesión o token para el usuario
+            if not usuario:
+                usuario = Usuario.objects.create(email=email, nombre=name)
+                usuario.save()
+                # Crear el carrito asociado al usuario recién creado
+                carrito = Carrito.objects.create(usuario=usuario)
             
         # Crea o obtiene el token de autenticación
         token = Token.objects.create(user=usuario)
         serializer = UsuarioSerializer(instance=usuario)
 
-        # Crear el carrito asociado al usuario recién creado
-        carrito = Carrito.objects.create(usuario=usuario)
         
         return Response({
             'success': True,
@@ -482,13 +483,14 @@ def github_callback(request):
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
+                # Crear el carrito asociado al usuario recién creado
+                carrito = Carrito.objects.create(usuario=usuario)
 
             # Crea o obtiene el token de autenticación
             token, created = Token.objects.get_or_create(user=usuario)
             serializer = UsuarioSerializer(instance=usuario)
 
-            # Crear el carrito asociado al usuario recién creado
-            carrito = Carrito.objects.create(usuario=usuario)
+            
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
             #frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
