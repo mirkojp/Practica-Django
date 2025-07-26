@@ -976,7 +976,8 @@ def mercado_pago_webhook(request):
                                 descuento = Descuento.objects.get(
                                     idDescuento=descuento_activo.descuento.idDescuento
                                 )
-                                precio_funko = item.funko.precio * ( 1 - (descuento.porcentaje / 100))
+
+                                precio_funko = item.funko.precio * ( 1 - (descuento.porcentaje / 100)
                             # Crear el CompraItem basado en cada CarritoItem
 
                             compra_item = CompraItem.objects.create(
