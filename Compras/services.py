@@ -7,7 +7,7 @@ import hmac
 import hashlib
 
 
-def validate_signature(body, signature, secret, x_request_id=None):
+def validate_signature(body, signature, secret, mp_id, x_request_id=None,):
     """
     Validate the x-signature header to ensure the request is from MercadoPago.
 
@@ -28,10 +28,6 @@ def validate_signature(body, signature, secret, x_request_id=None):
 
         if not timestamp or not expected_signature:
             return False
-
-        # Parse the body to get data.id
-        json_data = json.loads(body.decode("utf-8"))
-        mp_id = json_data.get("data", {}).get("id")
 
         if not mp_id:
             return False
