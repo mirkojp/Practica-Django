@@ -609,33 +609,6 @@ def CreatePreferenceFromCart(request, usuario):
         carrito_items = CarritoItem.objects.filter(carrito=carrito)
         envio = request.data.get("envio")
 
-        # --------------------IMPORTANT--------------------------------#
-        # NEED NEW LOGIC HERE, TO CHECK IF DISCOUNT ARE STILL VALID
-        # THAT THING IS ONLY BEEN CHECKED ON FRONTEND, AND 
-        # ON THE ASSIGNATION OF FUNKO INTO CARRITO
-        # --------------------IMPORTANT--------------------------------#
-
-        # Problably it will work something like that, im to tired to do it rnw
-        # precio_funko = funko.precio
-        # today = date.today()
-
-        # descuento_activo = FunkoDescuento.objects.filter(
-        #     funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
-        # ).first()
-
-        # if descuento_activo:
-        #     descuento = Descuento.objects.get(
-        #         idDescuento=descuento_activo.descuento.idDescuento
-        #     )
-        #     precio_funko *= 1 - (descuento.porcentaje / 100)
-        
-        # --------------------IMPORTANT--------------------------------#
-        # NEED NEW LOGIC HERE, TO CHECK IF DISCOUNT ARE STILL VALID
-        # THAT THING IS ONLY BEEN CHECKED ON FRONTEND, AND 
-        # ON THE ASSIGNATION OF FUNKO INTO CARRITO
-        # --------------------IMPORTANT--------------------------------#
-
-
         # Validar que el carrito no esté vacío
         if not carrito_items.exists():
             return Response(
@@ -667,7 +640,7 @@ def CreatePreferenceFromCart(request, usuario):
         for item in carrito_items:
             funko = item.funko
             precio_funko = funko.precio 
-            
+
             # Verificar si hay un descuento activo para el funko
             descuento_activo = FunkoDescuento.objects.filter(
                 funko=funko,
@@ -689,8 +662,9 @@ def CreatePreferenceFromCart(request, usuario):
             }
             items_for_mp.append(item_data)
 
+        envio_value = float(envio)
         if envio > 0:  # Only append if envio is a positive value
-            envio_value = float(envio)
+
             costo_envio = {
                 "title": "Costo de Envío",
                 "quantity": 1,
@@ -994,22 +968,22 @@ def mercado_pago_webhook(request):
                                 )
 
                             # add something like this
-                            # descuento_activo = FunkoDescuento.objects.filter(
-                            #     funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
-                            # ).first()
+                            descuento_activo = FunkoDescuento.objects.filter(
+                                funko=item.funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
+                            ).first()
 
-                            # if descuento_activo:
-                            #     descuento = Descuento.objects.get(
-                            #         idDescuento=descuento_activo.descuento.idDescuento
-                            #     )
-                            #     precio_funko *= 1 - (descuento.porcentaje / 100)
+                            if descuento_activo:
+                                descuento = Descuento.objects.get(
+                                    idDescuento=descuento_activo.descuento.idDescuento
+                                )
+                                precio_funko *= 1 - (descuento.porcentaje / 100)
                             # Crear el CompraItem basado en cada CarritoItem
 
                             compra_item = CompraItem.objects.create(
                                 compra=compra,
                                 funko=item.funko,
                                 cantidad=item.cantidad,
-                                subtotal=item.subtotal, # Change this to validate discount
+                                subtotal=precio_funko * item.cantidad,  # Change this to validate discount
                             )
                             # Sumar el subtotal del item al subtotal total de la compra
                             subtotal_compra += compra_item.subtotal
