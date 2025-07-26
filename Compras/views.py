@@ -800,12 +800,13 @@ def mercado_pago_webhook(request):
             logger.error(f"Address not found for direccion_id: {direccion_id}")
 
     try:
+        data = json.loads(request.body)
         signature = request.headers.get("x-signature", "")
         secret = os.getenv("MERCADOPAGO_SIGNING_SECRET")
         xRequestId = request.headers.get("x-request-id")
         # Try to get mp_id from data.id first, fallback to id
-        mp_id = request.GET.get("data.id") or request.GET.get("id")
- 
+        mp_id = request.GET.get("data.id") or data.get('id') or request.GET.get("id")
+
         if not validate_signature(request.body, signature, secret, mp_id, xRequestId): # send mp_id here, remove logic to find it inside
             logger.error(
                 f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}     {str(request.headers)}"
@@ -960,7 +961,6 @@ def mercado_pago_webhook(request):
                     direccion = Direccion.objects.get(idDireccion=direccion_id)
                     # Crear la compra con valores temporales de subtotal y total
 
-
                     # Crear las líneas de compra (CompraItem) a partir de los items del carrito
                     with transaction.atomic():
                         today = date.today()
@@ -973,7 +973,7 @@ def mercado_pago_webhook(request):
                             estado="PENDIENTE",
                         )
 
-                    # Variables para calcular el subtotal y total de la compra
+                        # Variables para calcular el subtotal y total de la compra
                         subtotal_compra = 0
                         for item in carrito_items:
                             # Verificar si hay suficiente stock
@@ -992,9 +992,9 @@ def mercado_pago_webhook(request):
                                     },
                                     status=status.HTTP_200_OK,
                                 )
-                            
-                            #add something like this
-                            #descuento_activo = FunkoDescuento.objects.filter(
+
+                            # add something like this
+                            # descuento_activo = FunkoDescuento.objects.filter(
                             #     funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
                             # ).first()
 
