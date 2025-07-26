@@ -22,6 +22,7 @@ from django.shortcuts import redirect
 from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from Productos.models import Funko
 from Productos.serializers import FunkoSerializer
+from urllib.parse import urlencode
 
 
 # Create your views here.
@@ -310,8 +311,8 @@ def login_facebook(request):
             # Manejo de otras excepciones
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-consumerKey = "zvuyvz3or8uMwzGGugpcl2f2Q"
-consumerSecret = "ZYbD70FPfubZcwvKMrggprs1Uk9MBfLPPu4x5IQ1PYUZzAsCdK"
+consumerKey = "wphvPcDJ4x6ApQbLplHTPzLjA"
+consumerSecret = "95ZV166DuDM785iITd1ZbLjtqm60DXerIuAOgoUEh1AfV69rtd"
 
 # Vista para iniciar la autenticación
 @api_view(['GET'])
@@ -335,10 +336,10 @@ def twitter_login(request):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Vista de callback que Twitter redirige con oauth_token y oauth_verifier
-@api_view(['POST'])
+@api_view(['GET'])
 def twitter_callback(request):
-    oauth_token = request.data.get('oauth_token')
-    oauth_verifier = request.data.get('oauth_verifier')
+    oauth_token = request.GET.get('oauth_token')
+    oauth_verifier = request.GET.get('oauth_verifier')
 
     if not oauth_token or not oauth_verifier:
         return Response({"error": "Faltan parámetros para la autenticación"}, status=status.HTTP_400_BAD_REQUEST)
@@ -369,37 +370,85 @@ def twitter_callback(request):
         )
         user_info = twitter.get(user_info_url).json()
 
+        #return Response({
+            #'success': True,
+            #'info': user_info,
+            #'info-email': user_info.get("email"),
+            #'info_name': user_info.get("name"),
+        #}, status=status.HTTP_200_OK)
+
         # Procesa la información del usuario
         email = user_info.get("email")
+        if not email:
+            screen_name = user_info.get("screen_name")
+            if screen_name:
+                email = screen_name + "@gmail.com"
+            else:
+                email = None  # O manejar el caso de que también falte el screen_name
+
         name = user_info.get("name")
 
-        # Verifica si el usuario ya existe
-        usuario = Usuario.objects.filter(email=email)
+        if email and name:
+            # Guardar o autenticar el usuario en la BD
+            # Devuelve el token de autenticación al frontend
 
-        # Crea una sesión o token para el usuario
-        if usuario:
-            if not usuario.nombre == name:
-                return Response({"error" : "Ya existe una cuenta registrada con esas credenciales"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            usuario = Usuario.objects.create(email=email, nombre=name)
-            usuario.save()
+            # Verifica si el usuario ya existe
+            usuario = Usuario.objects.filter(email=email).first()
+
+            # Crea una sesión o token para el usuario
+            if not usuario:
+                usuario = Usuario.objects.create(email=email, nombre=name)
+                usuario.save()
+                # Crear el carrito asociado al usuario recién creado
+                carrito = Carrito.objects.create(usuario=usuario)
             
         # Crea o obtiene el token de autenticación
-        token = Token.objects.create(user=usuario)
+        token, created = Token.objects.get_or_create(user=usuario)
         serializer = UsuarioSerializer(instance=usuario)
 
-        # Crear el carrito asociado al usuario recién creado
-        carrito = Carrito.objects.create(usuario=usuario)
         
-        return Response({
-            'success': True,
-            'message': 'Usuario autenticado exitosamente.',
-            'usuario': serializer.data,
-            "token" : token.key,
-        }, status=status.HTTP_200_OK)
+        #return Response({
+        #    'success': True,
+        #    'message': 'Usuario autenticado exitosamente.',
+        #    'usuario': serializer.data,
+        #    "token" : token.key,
+        #}, status=status.HTTP_200_OK)
 
+        #user = {
+        #    "idUsuario": usuario.idUsuario,
+        #    "is_staff": usuario.is_staff,
+        #}
+
+        #frontend_url = "https://importfunko.vercel.app/register"
+        #redirect_url = f"{frontend_url}?token={token}&userId={user['idUsuario']}&isStaff={str(user['is_staff']).lower()}"
+        #return redirect(redirect_url)
+    
+        query_params = urlencode({
+                'token': token,
+                'userId': usuario.idUsuario,
+                'isStaff': usuario.is_staff
+            })
+
+        return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
+
+    #except Exception as e:
+    #    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    except IntegrityError as e:
+        # Manejo del error de unicidad
+        if "duplicate key value violates unique constraint" in str(e):
+            error_message = "duplicate key value violates unique constraint"
+        else:
+            error_message = str(e)
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': error_message}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
+    
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Otros errores
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': str(e)}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
 
 @api_view(['GET'])
 def github_login(request):
@@ -463,26 +512,56 @@ def github_callback(request):
             # Crea una sesión o token para el usuario
             if usuario:
                 if not usuario.nombre == name:
-                    url = f'https://importfunkologin.netlify.app/?errorIntegridad=""'
-                    return redirect(url)
+                    #url = f'https://importfunkologin.netlify.app/?errorIntegridad=""'
+                    #return redirect(url)
+                
+                    redirect_url = "https://importfunko.vercel.app/social-login"
+                    params = {'error': "duplicate key value violates unique constraint"}
+                    return redirect(f"{redirect_url}?{urlencode(params)}")
             else:
                 usuario = Usuario.objects.create(email=primary_email, nombre=name)
                 usuario.save()
+                # Crear el carrito asociado al usuario recién creado
+                carrito = Carrito.objects.create(usuario=usuario)
 
             # Crea o obtiene el token de autenticación
             token, created = Token.objects.get_or_create(user=usuario)
+            serializer = UsuarioSerializer(instance=usuario)
 
-            # Crear el carrito asociado al usuario recién creado
-            carrito = Carrito.objects.create(usuario=usuario)
+            
 
             # Redirige al frontend con los datos en la URL (solo para pruebas; en producción, usa un almacenamiento seguro)
-            frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
-            return redirect(frontend_url)
+            #frontend_url = f"https://importfunkologin.netlify.app/dashboard?token={token}&idUsuario={usuario.idUsuario}"
+            #return redirect(frontend_url)
+
+            # Devuelve un token o mensaje de éxito al frontend
+            #return Response({
+            #    'success': True,
+            #    'message': 'Usuario autenticado exitosamente.',
+            #    'usuario': serializer.data,
+            #    "token" : token.key
+            #})
+
+            # Redirigir al frontend con los datos en la URL
+            query_params = urlencode({
+                'token': token,
+                'userId': usuario.idUsuario,
+                'isStaff': usuario.is_staff
+            })
+
+            return redirect(f'https://importfunko.vercel.app/social-login?{query_params}')
 
         else:
-            return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            #return Response({"error": "User data retrieval failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            redirect_url = "https://importfunko.vercel.app/social-login"
+            params = {'error': "User data retrieval failed"}
+            return redirect(f"{redirect_url}?{urlencode(params)}")
+        
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Otros errores
+        redirect_url = "https://importfunko.vercel.app/social-login"
+        params = {'error': str(e)}
+        return redirect(f"{redirect_url}?{urlencode(params)}")
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def listar_usuario(request, id):    #Resuelve /usuarios/{id}
