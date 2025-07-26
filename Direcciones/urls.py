@@ -33,9 +33,11 @@
 # ]
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import crear_direccion, obtener_direccion
+from .views import crear_direccion, obtener_direccion, obtener_todas_direcciones
 
 urlpatterns = [
     path("crear-direccion", crear_direccion, name="crear-direccion"),
     path("direcciones/<int:id>", obtener_direccion, name="obtener-direccion"),
+    path('direcciones/', obtener_todas_direcciones, name='obtener_todas_direcciones'),
 ]
+

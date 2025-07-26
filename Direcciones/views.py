@@ -493,3 +493,43 @@ def obtener_direccion(request, id):
     return JsonResponse(
         {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
     )
+
+
+
+
+@api_view(["GET"])
+@token_required_admin_without_user
+def obtener_todas_direcciones(request):
+    if request.method == "GET":
+        try:
+            # Retrieve all Direccion objects with related ciudad and provincia
+            direcciones = Direccion.objects.select_related("ciudad__provincia").all()
+
+            # Prepare response data
+            response_data = [
+                {
+                    "id_direccion": direccion.idDireccion,
+                    "calle": direccion.calle,
+                    "numero": direccion.numero,
+                    "piso": direccion.piso,
+                    "depto": direccion.depto,
+                    "codigo_postal": direccion.codigo_postal,
+                    "contacto": str(direccion.contacto) if direccion.contacto else None,
+                    "email": direccion.email,
+                    "ciudad": direccion.ciudad.nombre,
+                    "provincia": direccion.ciudad.provincia.nombre,
+                }
+                for direccion in direcciones
+            ]
+
+            return JsonResponse(response_data, safe=False, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return JsonResponse(
+                {"error": "Error interno del servidor", "detalle": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    return JsonResponse(
+        {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+    )
