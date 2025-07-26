@@ -699,6 +699,7 @@ def CreatePreferenceFromCart(request, usuario):
             }
             items_for_mp.append(costo_envio)
             carrito.envio = envio_value
+            carrito.total = carrito.total + envio_value
 
         # Encode carrito.id and direccion_id as JSON in external_reference
         external_reference = json.dumps(
@@ -804,8 +805,8 @@ def mercado_pago_webhook(request):
         xRequestId = request.headers.get("x-request-id")
         # Try to get mp_id from data.id first, fallback to id
         mp_id = request.GET.get("data.id") or request.GET.get("id")
-
-        if not validate_signature(request.body, signature, secret, xRequestId):
+ 
+        if not validate_signature(request.body, signature, secret, mp_id, xRequestId): # send mp_id here, remove logic to find it inside
             logger.error(
                 f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}     {str(request.headers)}"
             )
@@ -817,11 +818,10 @@ def mercado_pago_webhook(request):
             )
 
         payload = json.loads(request.body.decode("utf-8"))
-        topic = payload.get("topic")
-        actionType = payload.get("type")
+        topic = payload.get("topic") or payload.get("type")
 
         # Extract resource_id based on topic
-        if topic == "merchant_order" or actionType == "merchant_order":
+        if topic == "merchant_order":
             resource_url = payload.get("resource", "")
             # Extract ID from URL (e.g., last part of https://api.mercadolibre.com/merchant_orders/32652741650)
             try:
@@ -851,7 +851,7 @@ def mercado_pago_webhook(request):
                 status=status.HTTP_200_OK,
             )
 
-        if topic == "merchant_order" or actionType == "merchant_order":
+        if topic == "merchant_order":
             # Fetch merchant order from Mercado Pago
             merchant_order_response = sdk.merchant_order().get(resource_id)
             merchant_order = merchant_order_response["response"]
@@ -863,6 +863,7 @@ def mercado_pago_webhook(request):
                 json.dumps(merchant_order).encode("utf-8"),
                 signature,
                 secret,
+                mp_id,
                 xRequestId,
             ):
                 logger.error(f"Invalid signature for merchant order: {resource_id}")
@@ -908,7 +909,7 @@ def mercado_pago_webhook(request):
                 status=status.HTTP_200_OK,
             )
 
-        elif topic == "payment" or actionType == "payment":
+        elif topic == "payment":
             payment_response = sdk.payment().get(resource_id)
             payment = payment_response["response"]
             payment_status = payment.get("status")
@@ -991,20 +992,31 @@ def mercado_pago_webhook(request):
                                     },
                                     status=status.HTTP_200_OK,
                                 )
+                            
+                            #add something like this
+                            #descuento_activo = FunkoDescuento.objects.filter(
+                            #     funko=funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
+                            # ).first()
 
+                            # if descuento_activo:
+                            #     descuento = Descuento.objects.get(
+                            #         idDescuento=descuento_activo.descuento.idDescuento
+                            #     )
+                            #     precio_funko *= 1 - (descuento.porcentaje / 100)
                             # Crear el CompraItem basado en cada CarritoItem
+
                             compra_item = CompraItem.objects.create(
                                 compra=compra,
                                 funko=item.funko,
                                 cantidad=item.cantidad,
-                                subtotal=item.subtotal,
+                                subtotal=item.subtotal, # Change this to validate discount
                             )
                             # Sumar el subtotal del item al subtotal total de la compra
                             subtotal_compra += compra_item.subtotal
 
                         # Actualizar subtotal y total en la compra
                         compra.subtotal = subtotal_compra
-                        compra.total = compra.subtotal 
+                        compra.total = compra.subtotal + carrito.envio
                         compra.envio = carrito.envio
                         compra.save()
 
