@@ -768,7 +768,7 @@ def mercado_pago_webhook(request):
         if payment_id:
             refund_payment(payment_id, reason)
         try:
-            direccion = Direccion.objects.get(id=direccion_id)
+            direccion = Direccion.objects.get(idDireccion=direccion_id)
             direccion.delete()
         except Direccion.DoesNotExist:
             logger.error(f"Address not found for direccion_id: {direccion_id}")
@@ -976,7 +976,7 @@ def mercado_pago_webhook(request):
                                 descuento = Descuento.objects.get(
                                     idDescuento=descuento_activo.descuento.idDescuento
                                 )
-                                precio_funko *= 1 - (descuento.porcentaje / 100)
+                                precio_funko = item.funko.precio * ( 1 - (descuento.porcentaje / 100))
                             # Crear el CompraItem basado en cada CarritoItem
 
                             compra_item = CompraItem.objects.create(
