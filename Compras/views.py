@@ -696,7 +696,7 @@ def CreatePreferenceFromCart(request, usuario):
             "payer": {"email": usuario.email},
             "back_urls": {
                 "success": "https://importfunko.vercel.app/thank-you",
-                "failure": "https://importfunko.vercel.app/thank-you",
+                "failure": "https://importfunko.vercel.app/rejected",
                 # "pending": "https://importfunko.netlify.app/dashboard.html", No pending i dont want to work
             },
             "auto_return": "approved",
@@ -926,7 +926,7 @@ def mercado_pago_webhook(request):
                         send_email(
                             to=user_email,
                             subject="Error en la compra",
-                            body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) porque el carrito está vacío.",
+                            body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) porque el carrito está vacío.  Comunicate a nuestro email con el Mercado Pago ID",
                         )
                         return Response(
                             {"error": "Empty cart."},
@@ -961,7 +961,7 @@ def mercado_pago_webhook(request):
                                 send_email(
                                     to=user_email,
                                     subject="Error en la compra",
-                                    body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a stock insuficiente para el Funko {item.funko.nombre}.",
+                                    body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a stock insuficiente para el Funko {item.funko.nombre}. Comunicate a nuestro email con el Mercado Pago ID",
                                 )
                                 direccion.delete()
                                 return Response(
@@ -1035,7 +1035,7 @@ def mercado_pago_webhook(request):
                     send_email(
                         to=user_email,
                         subject="Error en la compra",
-                        body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a un error: {str(e)}",
+                        body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a un error: {str(e)}. Comunicate a nuestro email con el Mercado Pago ID",
                     )
                     return Response(
                         {"error": f"Purchase creation failed: {str(e)}"},
@@ -1049,7 +1049,7 @@ def mercado_pago_webhook(request):
                 send_email(
                     to=user_email,
                     subject="Compra cancelada",
-                    body=f"Tu compra (ID de Mercado Pago: {mp_id}) ha sido cancelada.",
+                    body=f"Tu compra (ID de Mercado Pago: {mp_id}) ha sido cancelada. Comunicate a nuestro email con el Mercado Pago ID",
                 )
                 return Response(
                     {"error": f"Payment {payment_status}"},
@@ -1067,7 +1067,7 @@ def mercado_pago_webhook(request):
                 send_email(
                     to=carrito.usuario.email,
                     subject="Error en el procesamiento",
-                    body=f"Se produjo un error inesperado al procesar tu solicitud (ID de Mercado Pago: {mp_id}): {str(e)}",
+                    body=f"Se produjo un error inesperado al procesar tu solicitud (ID de Mercado Pago: {mp_id}): {str(e)}. Comunicate a nuestro email con el Mercado Pago ID",
                 )
         except:
             pass
