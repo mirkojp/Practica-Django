@@ -916,10 +916,11 @@ def mercado_pago_webhook(request):
 
             if payment_status == "approved":
                 try:
-                    user_email = carrito.usuario.email
+
                     # Verificar si el carrito tiene items
                     carrito_items = CarritoItem.objects.filter(carrito=carrito)
                     direccion = Direccion.objects.get(idDireccion=direccion_id)
+                    user_email = direccion.email or carrito.usuario.email
                     if not carrito_items.exists():
                         # handle_payment_failure(resource_id, direccion_id, "Empty cart")
                         direccion.delete()
