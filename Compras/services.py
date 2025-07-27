@@ -10,12 +10,14 @@ import hashlib
 def validate_signature(body, signature, secret, mp_id, x_request_id=None,):
     """
     Validate the x-signature header to ensure the request is from MercadoPago.
+    Idk why but it doesnt work for somethings
 
     Args:
         body: The raw request body (bytes).
         signature: The x-signature header (e.g., "ts=123456,v1=abc123").
         secret: The signing secret from Mercado Pago.
-        x_request_id: The x-request-id header (optional).
+        mp_id = id from the transaction, 
+        x_request_id: The x-request-id header 
 
     Returns:
         bool: True if the signature is valid, False otherwise.
