@@ -540,6 +540,8 @@ def obtener_todas_direcciones(request):
 logger = logging.getLogger(__name__)
 
 
+@token_required_admin_without_user
+@csrf_exempt
 def obtener_direcciones_sin_compra_antiguas(request):
     if request.method == "GET":
         try:
@@ -572,6 +574,8 @@ def obtener_direcciones_sin_compra_antiguas(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
+@token_required_admin_without_user
+@csrf_exempt
 def eliminar_direcciones_sin_compra_antiguas(request):
     if request.method == "DELETE":
         try:
