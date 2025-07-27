@@ -330,10 +330,13 @@
 # View traer sucursales
 # Añadir Depto y piso en models.direccion
 # GET, PUT, DELETE de direccion
+from datetime import timedelta, timezone
+import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+from requests import Response
 from decorators.token_decorators import token_required_without_user, token_required_admin_without_user
 from rest_framework.decorators import (
     api_view,
@@ -495,8 +498,6 @@ def obtener_direccion(request, id):
     )
 
 
-
-
 @api_view(["GET"])
 @token_required_admin_without_user
 def obtener_todas_direcciones(request):
@@ -531,5 +532,96 @@ def obtener_todas_direcciones(request):
             )
 
     return JsonResponse(
+        {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+    )
+
+
+@api_view(["GET"])
+@token_required_admin_without_user
+def obtener_direcciones_sin_compra_antiguas(request):
+    if request.method == "GET":
+        try:
+            # Calculate the timestamp for 30 minutes ago
+            thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
+
+            # Get Direccion objects without Compra and older than 30 minutes
+            direcciones = Direccion.objects.select_related("ciudad__provincia").filter(
+                compra__isnull=True,  # No associated Compra
+                creada__lt=thirty_minutes_ago,  # Older than 30 minutes
+            )
+
+            # Prepare response data
+            response_data = [
+                {
+                    "id_direccion": direccion.idDireccion,
+                    "calle": direccion.calle,
+                    "numero": direccion.numero,
+                    "piso": direccion.piso,
+                    "depto": direccion.depto,
+                    "codigo_postal": direccion.codigo_postal,
+                    "contacto": str(direccion.contacto) if direccion.contacto else None,
+                    "email": direccion.email,
+                    "ciudad": direccion.ciudad.nombre,
+                    "provincia": direccion.ciudad.provincia.nombre,
+                    "creada": direccion.creada.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                }
+                for direccion in direcciones
+            ]
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": "Error interno del servidor", "detalle": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    return Response(
+        {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
+    )
+
+logger = logging.getLogger(__name__)
+
+@api_view(["DELETE"])
+@token_required_admin_without_user
+def eliminar_direcciones_sin_compra_antiguas(request):
+    if request.method == "DELETE":
+        try:
+            # Calculate the timestamp for 30 minutes ago
+            thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
+
+            # Get Direccion objects without Compra and older than 30 minutes
+            direcciones = Direccion.objects.filter(
+                compra__isnull=True,  # No associated Compra
+                creada__lt=thirty_minutes_ago,  # Older than 30 minutes
+            )
+
+            # Count and delete
+            count = direcciones.count()
+            deleted_ids = [direccion.idDireccion for direccion in direcciones]
+            direcciones.delete()
+
+            # Log the deletion
+            logger.info(
+                f"Deleted {count} Direccion objects without Compra, older than 30 minutes: {deleted_ids}"
+            )
+
+
+            return Response(
+                {
+                    "message": f"Se eliminaron {count} direcciones sin compras asociadas y con más de 30 minutos de antigüedad.",
+                    "deleted_ids": deleted_ids,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.error(f"Error deleting Direccion objects: {str(e)}")
+            return Response(
+                {"error": "Error interno del servidor", "detalle": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    return Response(
         {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
     )
