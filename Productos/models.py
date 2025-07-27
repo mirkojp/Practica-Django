@@ -45,7 +45,9 @@ class Funko(models.Model):
     descripción = models.TextField(blank=False, null=False)
     is_backlight = models.BooleanField(default=False, blank=False, null=False)
     stock = models.PositiveIntegerField(null=False, blank=False)
-    precio = models.IntegerField()
+    precio = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
 
     # Relaciones
     categoría = models.ManyToManyField(Categoría)

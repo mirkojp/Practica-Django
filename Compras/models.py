@@ -8,10 +8,12 @@ from django.core.validators import MinValueValidator
 
 class Carrito(models.Model):
     idCarrito = models.AutoField(primary_key=True)
-    total = models.PositiveIntegerField(default=0, blank=True)
+    total = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
     envio = models.FloatField(default=0, blank=True, validators=[MinValueValidator(0.0)])
 
-    #Relaciones
+    # Relaciones
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -20,13 +22,13 @@ class Carrito(models.Model):
 class CarritoItem(models.Model):
     idCarritoItem = models.AutoField(primary_key=True)
     cantidad = models.PositiveIntegerField(default=1)
-    subtotal = models.PositiveIntegerField(default=0)
+    subtotal = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
 
-    #Relaciones
+    # Relaciones
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
     funko = models.ForeignKey(Funko, on_delete=models.CASCADE)
-    
-
 
     def __str__(self):
         return f"{self.cantidad} x {self.funko.nombre}"
@@ -40,8 +42,12 @@ class Compra(models.Model):
     ]
 
     idCompra = models.AutoField(primary_key=True)
-    subtotal = models.PositiveIntegerField(null=False, blank=False)
-    total = models.PositiveIntegerField(null=False, blank=False)
+    subtotal = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
+    total = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
     fecha = models.DateField(null=False, blank=False)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
     envio = models.FloatField(default=0, blank=True, validators=[MinValueValidator(0.0)])
@@ -56,12 +62,13 @@ class Compra(models.Model):
 class CompraItem(models.Model):
     idCompraItem = models.AutoField(primary_key=True)
     cantidad = models.PositiveIntegerField(default=1)
-    subtotal = models.PositiveIntegerField(default=0)
+    subtotal = models.FloatField(
+        default=0, blank=True, validators=[MinValueValidator(0.0)]
+    )
 
     # Relaciones
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name="items")
     funko = models.ForeignKey(Funko, on_delete=models.CASCADE)
-
 
     def __str__(self):
         return f"{self.cantidad} x {self.funko.nombre} - Subtotal {self.subtotal} - Compra {self.compra.idCompra}"
