@@ -963,6 +963,7 @@ def mercado_pago_webhook(request):
                                     subject="Error en la compra",
                                     body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a stock insuficiente para el Funko {item.funko.nombre}.",
                                 )
+                                direccion.delete()
                                 return Response(
                                     {
                                         "error": f"Stock insuficiente para el Funko {item.funko.nombre}."
