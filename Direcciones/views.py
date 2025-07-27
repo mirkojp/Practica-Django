@@ -330,7 +330,8 @@
 # View traer sucursales
 # Añadir Depto y piso en models.direccion
 # GET, PUT, DELETE de direccion
-from datetime import timedelta, timezone
+from datetime import timedelta
+from django.utils import timezone
 import logging
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -583,11 +584,6 @@ def eliminar_direcciones_sin_compra_antiguas(request):
             direcciones.delete()
             logger.info(
                 f"Deleted {count} Direccion objects without Compra, older than 30 minutes: {deleted_ids}"
-            )
-            send_email(
-                to="mirkopavan@gmail.com",
-                subject="Eliminación de Direcciones Antiguas",
-                body=f"Se eliminaron {count} direcciones sin compras asociadas y con más de 30 minutos de antigüedad. IDs: {', '.join(map(str, deleted_ids))}",
             )
             return JsonResponse(
                 {
