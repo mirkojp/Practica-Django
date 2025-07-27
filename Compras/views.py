@@ -1011,7 +1011,7 @@ def mercado_pago_webhook(request):
                     send_email(
                         to=user_email,
                         subject="Compra realizada con éxito",
-                        body=f"Tu compra con ID {compra.id} (ID de Mercado Pago: {mp_id}) ha sido procesada exitosamente. Total: ${compra.total}",
+                        body=f"Tu compra con ID {compra.idCompra} (ID de Mercado Pago: {mp_id}) ha sido procesada exitosamente. Total: ${compra.total}",
                         html_template="emails/purchase_confirmation.html",
                         context={
                             "message": f"Tu compra con ID {compra.idCompra} (ID de Mercado Pago: {mp_id}) ha sido procesada exitosamente.",
