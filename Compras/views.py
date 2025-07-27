@@ -956,10 +956,8 @@ def mercado_pago_webhook(request):
                                 # Restar el stock del Funko
                                 item.funko.stock -= item.cantidad
                                 item.funko.save()
-                                item.funko.refresh_from_db()
-                                print(
-                                    f"Nuevo stock de {item.funko.nombre}: {item.funko.stock}"
-                                )
+                                # item.funko.refresh_from_db()
+
                             else:
                                 return Response(
                                     {
@@ -1024,9 +1022,8 @@ def mercado_pago_webhook(request):
             elif payment_status == "pending":
                 return Response({"status": "Pending"}, status=status.HTTP_200_OK)
             elif payment_status == "cancelled":
-                handle_payment_failure(
-                    resource_id, direccion_id, f"Payment {payment_status}"
-                )
+                direccion.delete()
+
                 return Response(
                     {"error": f"Payment {payment_status}"},
                     status=status.HTTP_200_OK,
