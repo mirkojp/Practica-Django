@@ -1,4 +1,3 @@
-
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -40,6 +39,7 @@ class Direccion(models.Model):
     codigo_postal = models.CharField(max_length=20)
     contacto = PhoneNumberField(region="AR", null=True, blank=True)
     email = models.EmailField(blank=True, null=True)
+    creada = models.DateTimeField(auto_now_add=True)
     # coordenada = models.OneToOneField(
     #     Coordenada, on_delete=models.CASCADE, related_name="direccion"
     # )
