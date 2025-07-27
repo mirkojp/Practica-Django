@@ -31,7 +31,7 @@ from .services import validate_signature
 import os
 from django.http import HttpResponse
 import logging
-from utils import send_email
+from .utils import send_email
 from Direcciones.models import Direccion
 
 logger = logging.getLogger(__name__)
