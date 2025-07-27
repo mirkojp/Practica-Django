@@ -536,21 +536,16 @@ def obtener_todas_direcciones(request):
     )
 
 
-@api_view(["GET"])
-@token_required_admin_without_user
+logger = logging.getLogger(__name__)
+
+
 def obtener_direcciones_sin_compra_antiguas(request):
     if request.method == "GET":
         try:
-            # Calculate the timestamp for 30 minutes ago
             thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
-
-            # Get Direccion objects without Compra and older than 30 minutes
             direcciones = Direccion.objects.select_related("ciudad__provincia").filter(
-                compra__isnull=True,  # No associated Compra
-                creada__lt=thirty_minutes_ago,  # Older than 30 minutes
+                compra__isnull=True, creada__lt=thirty_minutes_ago
             )
-
-            # Prepare response data
             response_data = [
                 {
                     "id_direccion": direccion.idDireccion,
@@ -567,61 +562,43 @@ def obtener_direcciones_sin_compra_antiguas(request):
                 }
                 for direccion in direcciones
             ]
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
+            return JsonResponse(response_data, safe=False, status=200)
         except Exception as e:
-            return Response(
-                {"error": "Error interno del servidor", "detalle": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            logger.error(f"Error retrieving Direccion objects: {str(e)}")
+            return JsonResponse(
+                {"error": "Error interno del servidor", "detalle": str(e)}, status=500
             )
+    return JsonResponse({"error": "Método no permitido"}, status=405)
 
-    return Response(
-        {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
-    )
 
-logger = logging.getLogger(__name__)
-
-@api_view(["DELETE"])
-@token_required_admin_without_user
 def eliminar_direcciones_sin_compra_antiguas(request):
     if request.method == "DELETE":
         try:
-            # Calculate the timestamp for 30 minutes ago
             thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
-
-            # Get Direccion objects without Compra and older than 30 minutes
             direcciones = Direccion.objects.filter(
-                compra__isnull=True,  # No associated Compra
-                creada__lt=thirty_minutes_ago,  # Older than 30 minutes
+                compra__isnull=True, creada__lt=thirty_minutes_ago
             )
-
-            # Count and delete
             count = direcciones.count()
             deleted_ids = [direccion.idDireccion for direccion in direcciones]
             direcciones.delete()
-
-            # Log the deletion
             logger.info(
                 f"Deleted {count} Direccion objects without Compra, older than 30 minutes: {deleted_ids}"
             )
-
-
-            return Response(
+            send_email(
+                to="mirkopavan@gmail.com",
+                subject="Eliminación de Direcciones Antiguas",
+                body=f"Se eliminaron {count} direcciones sin compras asociadas y con más de 30 minutos de antigüedad. IDs: {', '.join(map(str, deleted_ids))}",
+            )
+            return JsonResponse(
                 {
                     "message": f"Se eliminaron {count} direcciones sin compras asociadas y con más de 30 minutos de antigüedad.",
                     "deleted_ids": deleted_ids,
                 },
-                status=status.HTTP_200_OK,
+                status=200,
             )
-
         except Exception as e:
             logger.error(f"Error deleting Direccion objects: {str(e)}")
-            return Response(
-                {"error": "Error interno del servidor", "detalle": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return JsonResponse(
+                {"error": "Error interno del servidor", "detalle": str(e)}, status=500
             )
-
-    return Response(
-        {"error": "Método no permitido"}, status=status.HTTP_405_METHOD_NOT_ALLOWED
-    )
+    return JsonResponse({"error": "Método no permitido"}, status=405)
