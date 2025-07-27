@@ -218,6 +218,15 @@ cloudinary.config(
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "mirkopavan88878@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # Loads from .env
+DEFAULT_FROM_EMAIL = "Import Funko Cdelu"
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'

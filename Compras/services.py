@@ -2,9 +2,6 @@ import json
 import hmac
 import hashlib
 
-import json
-import hmac
-import hashlib
 
 
 def validate_signature(body, signature, secret, mp_id, x_request_id=None,):

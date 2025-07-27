@@ -31,7 +31,7 @@ from .services import validate_signature
 import os
 from django.http import HttpResponse
 import logging
-
+from utils import send_email
 from Direcciones.models import Direccion
 
 logger = logging.getLogger(__name__)
@@ -741,38 +741,38 @@ def CreatePreferenceFromCart(request, usuario):
 @csrf_exempt
 def mercado_pago_webhook(request):
 
-    def refund_payment(payment_id, reason):
-        """
-        Initiate a full refund for a payment.
-        """
-        try:
-            # Check if payment is already refunded
-            payment_response = sdk.payment().get(payment_id)
-            payment = payment_response["response"]
-            if payment.get("status") == "refunded":
-                logger.info(f"Payment {payment_id} already refunded")
-                return
+    # def refund_payment(payment_id, reason):
+    #     """
+    #     Initiate a full refund for a payment.
+    #     """
+    #     try:
+    #         # Check if payment is already refunded
+    #         payment_response = sdk.payment().get(payment_id)
+    #         payment = payment_response["response"]
+    #         if payment.get("status") == "refunded":
+    #             logger.info(f"Payment {payment_id} already refunded")
+    #             return
 
-            # Initiate full refund
-            refund_response = sdk.refund().create(payment_id)
-            if refund_response["status"] == 201:
-                logger.info(f"Refund initiated for payment {payment_id}: {reason}")
-            else:
-                logger.error(
-                    f"Refund failed for payment {payment_id}: {refund_response.get('message')}"
-                )
-        except mercadopago.exceptions.MPException as e:
-            logger.error(f"Refund error for payment {payment_id}: {str(e)}")
+    #         # Initiate full refund
+    #         refund_response = sdk.refund().create(payment_id)
+    #         if refund_response["status"] == 201:
+    #             logger.info(f"Refund initiated for payment {payment_id}: {reason}")
+    #         else:
+    #             logger.error(
+    #                 f"Refund failed for payment {payment_id}: {refund_response.get('message')}"
+    #             )
+    #     except mercadopago.exceptions.MPException as e:
+    #         logger.error(f"Refund error for payment {payment_id}: {str(e)}")
 
-    def handle_payment_failure(payment_id, direccion_id, reason):
-        logger.error(reason)
-        if payment_id:
-            refund_payment(payment_id, reason)
-        try:
-            direccion = Direccion.objects.get(idDireccion=direccion_id)
-            direccion.delete()
-        except Direccion.DoesNotExist:
-            logger.error(f"Address not found for direccion_id: {direccion_id}")
+    # def handle_payment_failure(payment_id, direccion_id, reason):
+    #     logger.error(reason)
+    #     if payment_id:
+    #         refund_payment(payment_id, reason)
+    #     try:
+    #         direccion = Direccion.objects.get(idDireccion=direccion_id)
+    #         direccion.delete()
+    #     except Direccion.DoesNotExist:
+    #         logger.error(f"Address not found for direccion_id: {direccion_id}")
 
     try:
         data = json.loads(request.body)
@@ -783,12 +783,12 @@ def mercado_pago_webhook(request):
         mp_id = request.GET.get("data.id") or data.get('id') or request.GET.get("id")
 
         if not validate_signature(request.body, signature, secret, mp_id, xRequestId): # send mp_id here, remove logic to find it inside
-            logger.error(
-                f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}     {str(request.headers)}"
-            )
+            # logger.error(
+            #     f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}     {str(request.body)}     {str(request.headers)}"
+            # )
             return Response(
                 {
-                    "error": f"{str(signature)}   {str(secret)}   {str(xRequestId)}    {str(mp_id)}      {str(request.body)}    {str(request.headers)}"
+                    "error": f"Merchant orders son ignoradas"
                 },
                 status=status.HTTP_200_OK,
             )
@@ -797,29 +797,29 @@ def mercado_pago_webhook(request):
         topic = payload.get("topic") or payload.get("type")
 
         # Extract resource_id based on topic
-        if topic == "merchant_order":
-            resource_url = payload.get("resource", "")
-            # Extract ID from URL (e.g., last part of https://api.mercadolibre.com/merchant_orders/32652741650)
-            try:
-                resource_id = resource_url.split("/")[-1] if resource_url else None
-                if not resource_id:
-                    logger.error(f"Invalid resource URL format: {resource_url}")
-                    return Response(
-                        {"error": "Invalid resource URL format"},
-                        status=status.HTTP_200_OK,
-                    )
-            except Exception as e:
-                logger.error(
-                    f"Failed to extract resource_id from URL: {resource_url}, error: {str(e)}"
-                )
-                return Response(
-                    {"error": "Failed to extract resource_id"},
-                    status=status.HTTP_200_OK,
-                )
-        else:
-            # For payment topics, get ID from data.id
-            resource_id = payload.get("data", {}).get("id")
-
+        # if topic == "merchant_order":
+        #     resource_url = payload.get("resource", "")
+        #     # Extract ID from URL (e.g., last part of https://api.mercadolibre.com/merchant_orders/32652741650)
+        #     try:
+        #         resource_id = resource_url.split("/")[-1] if resource_url else None
+        #         if not resource_id:
+        #             logger.error(f"Invalid resource URL format: {resource_url}")
+        #             return Response(
+        #                 {"error": "Invalid resource URL format"},
+        #                 status=status.HTTP_200_OK,
+        #             )
+        #     except Exception as e:
+        #         logger.error(
+        #             f"Failed to extract resource_id from URL: {resource_url}, error: {str(e)}"
+        #         )
+        #         return Response(
+        #             {"error": "Failed to extract resource_id"},
+        #             status=status.HTTP_200_OK,
+        #         )
+        # else:
+        #     # For payment topics, get ID from data.id
+        #     resource_id = payload.get("data", {}).get("id") or payload.get("id")
+        resource_id = payload.get("data", {}).get("id") or payload.get("id")
         if not resource_id:
             logger.error(f"No resource_id found in payload: {str(payload)}")
             return Response(
@@ -827,65 +827,65 @@ def mercado_pago_webhook(request):
                 status=status.HTTP_200_OK,
             )
 
-        if topic == "merchant_order":
-            # Fetch merchant order from Mercado Pago
-            merchant_order_response = sdk.merchant_order().get(resource_id)
-            merchant_order = merchant_order_response["response"]
-            merchant_order_status = merchant_order.get("status")
-            external_reference = merchant_order.get("external_reference", "")
+        # if topic == "merchant_order":
+        #     # Fetch merchant order from Mercado Pago
+        #     merchant_order_response = sdk.merchant_order().get(resource_id)
+        #     merchant_order = merchant_order_response["response"]
+        #     merchant_order_status = merchant_order.get("status")
+        #     external_reference = merchant_order.get("external_reference", "")
 
-            # Validate signature for merchant order
-            if not validate_signature(
-                json.dumps(merchant_order).encode("utf-8"),
-                signature,
-                secret,
-                mp_id,
-                xRequestId,
-            ):
-                logger.error(f"Invalid signature for merchant order: {resource_id}")
-                return Response(
-                    {"error": "Invalid signature for merchant order"},
-                    status=status.HTTP_200_OK,
-                )
+        #     # Validate signature for merchant order
+        #     if not validate_signature(
+        #         json.dumps(merchant_order).encode("utf-8"),
+        #         signature,
+        #         secret,
+        #         mp_id,
+        #         xRequestId,
+        #     ):
+        #         logger.error(f"Invalid signature for merchant order: {resource_id}")
+        #         return Response(
+        #             {"error": "Invalid signature for merchant order"},
+        #             status=status.HTTP_200_OK,
+        #         )
 
-            # Parse external_reference
-            try:
-                ref_data = json.loads(external_reference)
-                carrito_id = ref_data.get("carrito_id")
-                direccion_id = ref_data.get("direccion_id")
-            except (json.JSONDecodeError, KeyError):
-                logger.error(f"Invalid external_reference format: {external_reference}")
-                return Response(
-                    {"error": "Invalid external_reference format"},
-                    status=status.HTTP_201_OK,
-                )
+        #     # Parse external_reference
+        #     try:
+        #         ref_data = json.loads(external_reference)
+        #         carrito_id = ref_data.get("carrito_id")
+        #         direccion_id = ref_data.get("direccion_id")
+        #     except (json.JSONDecodeError, KeyError):
+        #         logger.error(f"Invalid external_reference format: {external_reference}")
+        #         return Response(
+        #             {"error": "Invalid external_reference format"},
+        #             status=status.HTTP_201_OK,
+        #         )
 
-            if merchant_order_status == "cancelled":
-                try:
-                    # Remove direccion associated with the order
-                    Direccion.objects.filter(idDireccion=direccion_id).delete()
-                    logger.info(
-                        f"Direccion {direccion_id} removed for cancelled merchant order {resource_id}"
-                    )
-                    return Response(
-                        {
-                            "status": "Cancelled merchant order processed, direccion removed"
-                        },
-                        status=status.HTTP_200_OK,
-                    )
-                except Direccion.DoesNotExist:
-                    logger.error(f"Direccion not found for id: {direccion_id}")
-                    return Response(
-                        {"error": "Direccion not found"},
-                        status=status.HTTP_200_OK,
-                    )
+        #     if merchant_order_status == "cancelled":
+        #         try:
+        #             # Remove direccion associated with the order
+        #             Direccion.objects.filter(idDireccion=direccion_id).delete()
+        #             logger.info(
+        #                 f"Direccion {direccion_id} removed for cancelled merchant order {resource_id}"
+        #             )
+        #             return Response(
+        #                 {
+        #                     "status": "Cancelled merchant order processed, direccion removed"
+        #                 },
+        #                 status=status.HTTP_200_OK,
+        #             )
+        #         except Direccion.DoesNotExist:
+        #             logger.error(f"Direccion not found for id: {direccion_id}")
+        #             return Response(
+        #                 {"error": "Direccion not found"},
+        #                 status=status.HTTP_200_OK,
+        #             )
 
-            return Response(
-                {"status": f"Merchant order {merchant_order_status}"},
-                status=status.HTTP_200_OK,
-            )
+        #     return Response(
+        #         {"status": f"Merchant order {merchant_order_status}"},
+        #         status=status.HTTP_200_OK,
+        #     )
 
-        elif topic == "payment":
+        if topic == "payment":
             payment_response = sdk.payment().get(resource_id)
             payment = payment_response["response"]
             payment_status = payment.get("status")
@@ -898,11 +898,6 @@ def mercado_pago_webhook(request):
                 direccion_id = ref_data.get("direccion_id")
             except (json.JSONDecodeError, KeyError):
                 logger.error(f"Invalid external_reference format: {external_reference}")
-                handle_payment_failure(
-                    resource_id,
-                    direccion_id,
-                    f"Invalid external_reference format: {external_reference}",
-                )
                 return Response(
                     {"error": "Invalid external_reference format"},
                     status=status.HTTP_201_OK,
@@ -911,13 +906,9 @@ def mercado_pago_webhook(request):
             # Fetch and validate cart
             try:
                 carrito = Carrito.objects.get(idCarrito = carrito_id)
+
             except Carrito.DoesNotExist:
                 logger.error(f"Cart not found for carrito_id: {carrito_id}")
-                handle_payment_failure(
-                    resource_id,
-                    direccion_id,
-                    f"Cart not found for carrito_id: {carrito_id}",
-                )
                 return Response(
                     {"error": "Cart not found"},
                     status=status.HTTP_200_OK,
@@ -925,15 +916,23 @@ def mercado_pago_webhook(request):
 
             if payment_status == "approved":
                 try:
+                    user_email = carrito.usuario.email
                     # Verificar si el carrito tiene items
                     carrito_items = CarritoItem.objects.filter(carrito=carrito)
+                    direccion = Direccion.objects.get(idDireccion=direccion_id)
                     if not carrito_items.exists():
-                        handle_payment_failure(resource_id, direccion_id, "Empty cart")
+                        # handle_payment_failure(resource_id, direccion_id, "Empty cart")
+                        direccion.delete()
+                        send_email(
+                            to=user_email,
+                            subject="Error en la compra",
+                            body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) porque el carrito está vacío.",
+                        )
                         return Response(
                             {"error": "Empty cart."},
                             status=status.HTTP_201_OK,
                         )
-                    direccion = Direccion.objects.get(idDireccion=direccion_id)
+
                     # Crear la compra con valores temporales de subtotal y total
 
                     # Crear las líneas de compra (CompraItem) a partir de los items del carrito
@@ -959,6 +958,11 @@ def mercado_pago_webhook(request):
                                 # item.funko.refresh_from_db()
 
                             else:
+                                send_email(
+                                    to=user_email,
+                                    subject="Error en la compra",
+                                    body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a stock insuficiente para el Funko {item.funko.nombre}.",
+                                )
                                 return Response(
                                     {
                                         "error": f"Stock insuficiente para el Funko {item.funko.nombre}."
@@ -970,7 +974,6 @@ def mercado_pago_webhook(request):
                             descuento_activo = FunkoDescuento.objects.filter(
                                 funko=item.funko, fecha_inicio__lte=today, fecha_expiracion__gte=today
                             ).first()
-
 
                             if descuento_activo:
                                 descuento = Descuento.objects.get(
@@ -1005,6 +1008,17 @@ def mercado_pago_webhook(request):
 
                     # Serializar y devolver la compra creada
                     serializer = CompraSerializer(compra)
+                    send_email(
+                        to=user_email,
+                        subject="Compra realizada con éxito",
+                        body=f"Tu compra con ID {compra.id} (ID de Mercado Pago: {mp_id}) ha sido procesada exitosamente. Total: ${compra.total}",
+                        html_template="emails/purchase_confirmation.html",
+                        context={
+                            "message": f"Tu compra con ID {compra.id} (ID de Mercado Pago: {mp_id}) ha sido procesada exitosamente.",
+                            "compra": compra,
+                            "mp_id": mp_id
+                        }
+                    )
                     return Response(
                         {
                             "Mensaje": "Compra creada exitosamente.",
@@ -1014,8 +1028,13 @@ def mercado_pago_webhook(request):
                     )
 
                 except Exception as e:
-                    handle_payment_failure(
-                        resource_id, direccion_id, f"Purchase creation failed: {str(e)}"
+                    # handle_payment_failure(
+                    #     resource_id, direccion_id, f"Purchase creation failed: {str(e)}"
+                    # )
+                    send_email(
+                        to=user_email,
+                        subject="Error en la compra",
+                        body=f"No se pudo procesar tu compra (ID de Mercado Pago: {mp_id}) debido a un error: {str(e)}",
                     )
                     return Response(
                         {"error": f"Purchase creation failed: {str(e)}"},
@@ -1026,7 +1045,11 @@ def mercado_pago_webhook(request):
                 return Response({"status": "Pending"}, status=status.HTTP_200_OK)
             elif payment_status == "cancelled":
                 direccion.delete()
-
+                send_email(
+                    to=user_email,
+                    subject="Compra cancelada",
+                    body=f"Tu compra (ID de Mercado Pago: {mp_id}) ha sido cancelada.",
+                )
                 return Response(
                     {"error": f"Payment {payment_status}"},
                     status=status.HTTP_200_OK,
@@ -1037,9 +1060,16 @@ def mercado_pago_webhook(request):
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {str(e)}")
-        handle_payment_failure(
-            resource_id, direccion_id, f"Webhook processing failed: {str(e)}"
-        )
+        try:
+            carrito = Carrito.objects.get(idCarrito=carrito_id) if 'carrito_id' in locals() else None
+            if carrito:
+                send_email(
+                    to=carrito.usuario.email,
+                    subject="Error en el procesamiento",
+                    body=f"Se produjo un error inesperado al procesar tu solicitud (ID de Mercado Pago: {mp_id}): {str(e)}",
+                )
+        except:
+            pass
         return Response({"error": "Uncatched error"}, status=status.HTTP_200_OK)
 
 # New atrbute on carrito and compra for shipment price
