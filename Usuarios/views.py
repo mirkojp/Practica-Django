@@ -266,7 +266,7 @@ def login_facebook(request):
     if request.method == 'POST':
         try:
             # Definir client_id y client_secret directamente en la vista
-            FACEBOOK_CLIENT_ID = '1205840470714772'
+            FACEBOOK_CLIENT_ID = '1205840470714772' 
             FACEBOOK_CLIENT_SECRET = '987184f52149730f290e7d376c15c4ef'
 
             # Recibe el token enviado desde el frontend
