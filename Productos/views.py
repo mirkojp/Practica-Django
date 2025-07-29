@@ -898,17 +898,12 @@ def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, elimi
             # Intentar obtener el FunkoDescuento por el id 
             funkoDescuento = FunkoDescuento.objects.get(idFunkoDescuento=id)
 
-            # Convertir fecha_expiracion (string) a objeto date para comparación
-            fecha_expiracion_str = funkoDescuento.fecha_expiracion  # "2025-05-31"
-            fecha_expiracion = datetime.strptime(fecha_expiracion_str, "%Y-%m-%d").date()
-            fecha_actual = date.today()
-
             # Verificar si el descuento ha expirado
-            if fecha_expiracion < fecha_actual:
-                # Eliminar si está expirado
+            if funkoDescuento.fecha_expiracion < date.today():
+                # Si está expirado, eliminarlo y retornar error
                 funkoDescuento.delete()
                 return Response(
-                    {"error": "Este descuento ha expirado y ha sido eliminado."},
+                    {"error": "El descuento ha expirado y ha sido eliminado."},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
