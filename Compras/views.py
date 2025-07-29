@@ -652,15 +652,6 @@ def CreatePreferenceFromCart(request, usuario):
 
         # Crear la lista de ítems para MercadoPago
 
-        # for item in carrito_items:
-        #     funko = item.funko
-        #     item_data = {
-        #         "title": funko.nombre,
-        #         "quantity": item.cantidad,
-        #         "currency_id": "ARS",
-        #         "unit_price": float(item.subtotal / item.cantidad),
-        #     }
-        #     items_for_mp.append(item_data)
         today = date.today()
         items_for_mp = []
         for item in carrito_items:
