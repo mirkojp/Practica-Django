@@ -18,6 +18,7 @@ from decorators.token_decorators import token_required_admin_without_user
 from .services import upload_image_to_cloudinary, delete_image_from_cloudinary
 import cloudinary
 from django.utils.decorators import method_decorator
+from datetime import date
 
 @api_view(["POST", "GET"]) #Resuelve crear y listar funkos
 def old_Funkos(request):
@@ -793,6 +794,13 @@ def funkoDescuentos(request):  #Resuelve crear FunkoDescuento y listarlos
 
     elif request.method == "GET":
 
+        # Obtener la fecha actual
+        fecha_actual = date.today()
+        
+        # Filtrar y eliminar los registros expirados
+        registros_expirados = FunkoDescuento.objects.filter(fecha_expiracion__lt=fecha_actual)
+        registros_expirados.delete()
+
         # Obtener todos los registros del modelo FunkoDescuento
         funkoDescuentos = FunkoDescuento.objects.all().values("idFunkoDescuento", "fecha_inicio", "fecha_expiracion", "funko", "descuento")
 
@@ -889,6 +897,16 @@ def op_funkoDescuentos(request, id):   #Resuelve listar un FunkoDescuento, elimi
         try:
             # Intentar obtener el FunkoDescuento por el id 
             funkoDescuento = FunkoDescuento.objects.get(idFunkoDescuento=id)
+
+            # Verificar si el descuento ha expirado
+            if funkoDescuento.fecha_expiracion < date.today():
+                # Si está expirado, eliminarlo y retornar error
+                funkoDescuento.delete()
+                return Response(
+                    {"error": "El descuento ha expirado y ha sido eliminado."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
             serializer = FunkoDescuentoSerializer(funkoDescuento)
 
             return Response(
