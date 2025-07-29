@@ -673,10 +673,18 @@ def CreatePreferenceFromCart(request, usuario):
                 "currency_id": "ARS",
                 "unit_price": envio_value,  # Use the envio value from frontend
             }
-            items_for_mp.append(costo_envio)
-            carrito.envio = envio_value
-            carrito.total = carrito.total + envio_value
-            carrito.save()
+
+            if carrito.envio != 0:
+                items_for_mp.append(costo_envio)
+                diferenciaEnvios = carrito.envio - envio_value # 100 - 150
+                carrito.envio = envio_value
+                carrito.total = carrito.total - diferenciaEnvios # 200 - - 50  = 250
+                carrito.save()
+            else:
+                items_for_mp.append(costo_envio)
+                carrito.envio = envio_value
+                carrito.total = carrito.total + envio_value
+                carrito.save()
 
         # Encode carrito.id and direccion_id as JSON in external_reference
         external_reference = json.dumps(
