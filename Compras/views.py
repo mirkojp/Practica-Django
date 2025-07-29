@@ -59,6 +59,8 @@ def carritos(request, usuario):
             # Obtener el Funko
             funko = Funko.objects.get(idFunko=id_funko)
 
+            
+
             # Obtener el precio del Funko considerando un posible descuento
             precio_funko = funko.precio
             today = date.today()
@@ -79,12 +81,34 @@ def carritos(request, usuario):
                     carrito=carrito, funko=funko
                 ).first()
 
+
                 if carrito_item:
+
+                    # Verificar si la cantidad total excede el stock
+                    cantidad_total = carrito_item.cantidad + cantidad
+                    if cantidad_total > funko.stock:
+                        return Response(
+                            {
+                                "error": f"No hay suficiente stock. Disponible."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     # Actualizar cantidad y subtotal del CarritoItem existente
                     carrito_item.cantidad += cantidad
                     carrito_item.subtotal = precio_funko * carrito_item.cantidad
                     carrito_item.save()
                 else:
+
+                    # Verificar si la cantidad  excede el stock
+                    if cantidad > funko.stock:
+                        return Response(
+                            {
+                                "error": f"No hay suficiente stock. Disponible."
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
                     # Crear nuevo CarritoItem si no existe
                     subtotal = precio_funko * cantidad
                     carrito_item = CarritoItem.objects.create(
