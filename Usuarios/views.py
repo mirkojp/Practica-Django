@@ -23,7 +23,8 @@ from Utils.tokenAuthorization import userAuthorization, adminAuthorization
 from Productos.models import Funko
 from Productos.serializers import FunkoSerializer
 from urllib.parse import urlencode
-
+from datetime import date
+from Productos.models import Funko, FunkoDescuento, Descuento
 
 # Create your views here.
 
@@ -831,8 +832,34 @@ def listar_carrito(request, id):
     except Carrito.DoesNotExist:
         return Response({"error": "Carrito no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Obtener los items del carrito
+
     items = CarritoItem.objects.filter(carrito=carrito)
+    today = date.today()
+
+    for item in items:
+        descuento_activo = FunkoDescuento.objects.filter(
+            funko=item.funko,
+            fecha_inicio__lte=today,
+            fecha_expiracion__gte=today,
+        ).first()
+
+        if descuento_activo:
+            descuento = Descuento.objects.get(
+                idDescuento=descuento_activo.descuento.idDescuento
+            )
+            precio_funko = item.funko.precio * (
+                1 - (descuento.porcentaje / 100)
+            )
+        else:
+            precio_funko = item.funko.precio
+
+        item.subtotal = precio_funko * item.cantidad
+        item.save()
+
+    carrito.total = sum(
+        item.subtotal for item in CarritoItem.objects.filter(carrito=carrito)
+    )
+    carrito.save()
 
     # Serializar los datos
     serializer = CarritoItemSerializer(items, many=True)
