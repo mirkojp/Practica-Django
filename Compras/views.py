@@ -211,8 +211,8 @@ def carritos(request, usuario):
                 else:
                     precio_funko = item.funko.precio
 
-                carrito_item.subtotal = precio_funko * carrito_item.cantidad
-                carrito_item.save()
+                item.subtotal = precio_funko * item.cantidad
+                item.save()
 
 
             carrito.total = sum(
@@ -723,7 +723,7 @@ def CreatePreferenceFromCart(request, usuario):
             #     carrito.envio = envio_value
             #     carrito.total = carrito.total + envio_value
             #     carrito.save()
-            
+
             items_for_mp.append(costo_envio)
             carrito.envio = envio_value
             carrito.save()
