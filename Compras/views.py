@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 @api_view(["POST", "GET", "DELETE"])
 @token_required
 def carritos(request, usuario):
-    
+
     if request.method == "POST":
         # Verificar que el Funko y la cantidad fueron proporcionados
         id_funko = request.data.get("idFunko")
@@ -58,8 +58,6 @@ def carritos(request, usuario):
 
             # Obtener el Funko
             funko = Funko.objects.get(idFunko=id_funko)
-
-            
 
             # Obtener el precio del Funko considerando un posible descuento
             precio_funko = funko.precio
@@ -80,7 +78,6 @@ def carritos(request, usuario):
                 carrito_item = CarritoItem.objects.filter(
                     carrito=carrito, funko=funko
                 ).first()
-
 
                 if carrito_item:
 
@@ -196,6 +193,31 @@ def carritos(request, usuario):
 
             # Obtener todos los CarritoItem en el carrito
             carrito_items = CarritoItem.objects.filter(carrito=carrito)
+
+            for item in carrito_items:
+                descuento_activo = FunkoDescuento.objects.filter(
+                    funko=item.funko,
+                    fecha_inicio__lte=today,
+                    fecha_expiracion__gte=today,
+                ).first()
+
+                if descuento_activo:
+                    descuento = Descuento.objects.get(
+                        idDescuento=descuento_activo.descuento.idDescuento
+                    )
+                    precio_funko = item.funko.precio * (
+                        1 - (descuento.porcentaje / 100)
+                    )
+                else:
+                    precio_funko = item.funko.precio
+
+                carrito_item.subtotal = precio_funko * carrito_item.cantidad
+                carrito_item.save()
+
+            carrito.total = sum(
+                item.subtotal for item in CarritoItem.objects.filter(carrito=carrito)
+            )
+            carrito.save()
 
             # Serializar los CarritoItem para obtener los datos del Funko y la cantidad
             serializer = CarritoItemSerializer(carrito_items, many=True)
