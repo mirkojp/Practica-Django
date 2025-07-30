@@ -193,6 +193,7 @@ def carritos(request, usuario):
 
             # Obtener todos los CarritoItem en el carrito
             carrito_items = CarritoItem.objects.filter(carrito=carrito)
+            today = date.today()
 
             for item in carrito_items:
                 descuento_activo = FunkoDescuento.objects.filter(
@@ -213,7 +214,6 @@ def carritos(request, usuario):
 
                 item.subtotal = precio_funko * item.cantidad
                 item.save()
-
 
             carrito.total = sum(
                 item.subtotal for item in CarritoItem.objects.filter(carrito=carrito)
